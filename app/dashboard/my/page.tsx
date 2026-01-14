@@ -344,23 +344,45 @@ export default function UserDashboard() {
   const selectedProject = projects.find((p) => p.id === selectedProjectId) || projects[0]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
+      <header className="bg-gradient-to-r from-orange-600 via-orange-600 to-orange-700 border-b border-orange-500/50 shadow-lg shadow-orange-900/10 sticky top-0 z-40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src="/images/serviceitlogo.png" alt="Service IT+" className="w-8 h-8" />
-              <h1 className="text-xl font-bold text-gray-900">Service IT+</h1>
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="text-sm text-right hidden sm:block">
-                <p className="text-gray-600 text-xs">Signed in as</p>
-                <p className="font-semibold text-gray-900">{userEmail}</p>
+          <div className="h-16 flex items-center justify-between text-white">
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md ring-2 ring-white/20 group-hover:ring-white/40 transition-all duration-200 group-hover:scale-105">
+                <img src="/SERVICEITLOGO.png" alt="Service IT+" className="w-8 h-8 object-contain" />
               </div>
-              <Button onClick={handleLogout} variant="ghost" size="sm" className="text-gray-700 hover:bg-gray-100">
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
+              <div className="hidden sm:block">
+                <h1 className="text-lg font-bold tracking-tight leading-tight">My Dashboard</h1>
+                <p className="text-[10px] text-orange-100 font-medium tracking-wide">Personal View</p>
+              </div>
+            </Link>
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-right hidden sm:block">
+                <p className="text-orange-100 text-xs font-medium">Signed in as</p>
+                <p className="font-semibold text-white">{userEmail}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link href="/dashboard">
+                  <Button variant="ghost" className="hidden md:flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
+                    Org Dashboard
+                  </Button>
+                </Link>
+                <Link href="/dashboard/reports">
+                  <Button variant="ghost" className="hidden md:flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
+                    Reports
+                  </Button>
+                </Link>
+                <Link href="/dashboard/tasks">
+                  <Button variant="ghost" className="hidden md:flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
+                    Tasks
+                  </Button>
+                </Link>
+                <Button onClick={handleLogout} variant="ghost" className="h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -378,11 +400,17 @@ export default function UserDashboard() {
         </div>
 
         {todayLogged < 8 && (
-          <div className="flex gap-4 p-4 bg-amber-50 border border-amber-200 rounded-xl mb-8">
-            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="flex gap-4 p-5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl mb-8 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+              </div>
+            </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-900">Time Tracking Reminder</p>
-              <p className="text-sm text-amber-700 mt-1">You've logged {todayLogged}h today. Target is 8 hours.</p>
+              <p className="text-sm font-semibold text-amber-900 mb-1">Time Tracking Reminder</p>
+              <p className="text-sm text-amber-700">
+                You've logged <span className="font-bold">{todayLogged}h</span> today. Target is <span className="font-bold">8 hours</span>.
+              </p>
             </div>
           </div>
         )}
@@ -639,7 +667,7 @@ export default function UserDashboard() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-center">
-                        <Link href={`/user/time-tracker/${task.id}`}>
+                        <Link href={`/dashboard/time-tracker/${task.id}`}>
                           <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white rounded">
                             Log Time
                           </Button>
@@ -653,6 +681,41 @@ export default function UserDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-100 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center shadow-sm ring-1 ring-orange-100 overflow-hidden">
+                <img src="/SERVICEITLOGO.png" alt="Service IT+" className="w-8 h-8 object-contain" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold tracking-wide text-gray-900">
+                  Service IT+
+                </p>
+                <p className="text-xs text-gray-500">
+                  © 2025 Service IT+. All rights reserved.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-gray-600">
+              <Link href="/dashboard/reports" className="hover:text-gray-900 transition-colors">
+                Reports
+              </Link>
+              <span className="hidden sm:inline-block h-1 w-1 rounded-full bg-gray-300" />
+              <Link href="/dashboard/tasks" className="hover:text-gray-900 transition-colors">
+                Tasks
+              </Link>
+              <span className="hidden sm:inline-block h-1 w-1 rounded-full bg-gray-300" />
+              <Link href="/" className="hover:text-gray-900 transition-colors">
+                Home
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

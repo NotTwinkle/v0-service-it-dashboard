@@ -52,7 +52,7 @@ export default function SignupPage() {
               userId: Math.random().toString(36).substr(2, 9),
             }),
           )
-          router.push("/user/dashboard")
+          router.push("/dashboard")
         }, 1500)
       }, 500)
     } else {
