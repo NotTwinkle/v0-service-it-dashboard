@@ -123,7 +123,7 @@ export default function TimeTrackerPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-orange-600 via-orange-600 to-orange-700 border-b border-orange-500/50 shadow-lg shadow-orange-900/10 backdrop-blur-sm">
+      <header className="bg-gradient-to-r from-[#f16a21] via-[#f16a21] to-[#f79021] border-b border-orange-500/50 shadow-lg shadow-orange-900/10 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-16 flex items-center gap-4 text-white">
             <button
@@ -135,7 +135,7 @@ export default function TimeTrackerPage() {
             </button>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md ring-2 ring-white/20">
-                <Clock className="w-6 h-6 text-orange-600" />
+                <Clock className="w-6 h-6 text-[#f16a21]" />
               </div>
               <div>
                 <h1 className="text-lg font-bold tracking-tight">Time Tracker</h1>
@@ -242,7 +242,7 @@ export default function TimeTrackerPage() {
                   <Button
                     type="submit"
                     disabled={isLoading || !timeSpent}
-                    className="w-full bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-orange-900/25 hover:shadow-xl hover:shadow-orange-900/30 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                    className="w-full bg-gradient-to-r from-[#f16a21] to-[#f79021] hover:from-[#f79021] hover:to-[#f16a21] text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-orange-900/25 hover:shadow-xl hover:shadow-orange-900/30 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                   >
                     {isLoading ? (
                       <span className="flex items-center gap-2">
@@ -274,7 +274,7 @@ export default function TimeTrackerPage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 mb-3">Progress</p>
                   <div className="w-full bg-gray-100 rounded-full h-3 mb-3 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 h-3 rounded-full transition-all duration-500"
+                      className="bg-gradient-to-r from-[#f16a21] via-[#f79021] to-[#f79021] h-3 rounded-full transition-all duration-500"
                       style={{ width: `${Math.min((task.logged / task.estimated) * 100, 100)}%` }}
                     />
                   </div>

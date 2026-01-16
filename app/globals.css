@@ -4,15 +4,22 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --orange-primary: #ff6b35;
-  --navy-primary: #1b3a6b;
+  /* Service IT+ Brand Colors */
+  --orange-primary: #f16a21; /* Primary Orange RGB(241, 106, 33) */
+  --orange-light: #f79021; /* Light Orange RGB(247, 144, 33) */
+  --astronaut: #2d307a; /* Astronaut Blue RGB(45, 48, 122) */
+  --grey-primary: #979897; /* Grey RGB(151, 152, 151) */
+  --lavender: #b9b6dd; /* Lavender RGB(185, 182, 221) */
+  
+  /* Legacy color aliases */
+  --navy-primary: #2d307a;
   --white-bg: #ffffff;
   --gray-50: #f8f9fa;
   --gray-100: #f0f2f5;
   --gray-200: #e8eaed;
   --gray-300: #d8d9db;
   --gray-400: #c5c7cc;
-  --gray-500: #9aa0a6;
+  --gray-500: #979897;
   --gray-600: #5f6368;
   --gray-700: #3c4043;
 
@@ -22,33 +29,33 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #ff6b35;
+  --primary: #f16a21;
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: #1b3a6b;
+  --secondary: #2d307a;
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: #ff6b35;
+  --accent: #f16a21;
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: #ff6b35;
-  --chart-1: #ff6b35;
-  --chart-2: #1b3a6b;
-  --chart-3: #5f6368;
-  --chart-4: #ff8c5a;
-  --chart-5: #2d5a9f;
+  --ring: #f16a21;
+  --chart-1: #f16a21;
+  --chart-2: #2d307a;
+  --chart-3: #979897;
+  --chart-4: #f79021;
+  --chart-5: #b9b6dd;
   --radius: 0.5rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #1b3a6b;
+  --sidebar-primary: #2d307a;
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: #ff6b35;
+  --sidebar-accent: #f16a21;
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: #ff6b35;
+  --sidebar-ring: #f16a21;
 }
 
 .dark {
@@ -58,38 +65,39 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #ff6b35;
+  --primary: #f16a21;
   --primary-foreground: oklch(0.145 0 0);
-  --secondary: #2d5a9f;
+  --secondary: #2d307a;
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: #ff6b35;
+  --accent: #f16a21;
   --accent-foreground: oklch(0.145 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
-  --ring: #ff6b35;
-  --chart-1: #ff6b35;
-  --chart-2: #5ba3d0;
-  --chart-3: #8fa0a8;
-  --chart-4: #ff8c5a;
-  --chart-5: #6b8cc1;
-  --sidebar: #0a1e2e;
+  --ring: #f16a21;
+  --chart-1: #f16a21;
+  --chart-2: #2d307a;
+  --chart-3: #979897;
+  --chart-4: #f79021;
+  --chart-5: #b9b6dd;
+  --sidebar: #1a1d3e;
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: #ff6b35;
-  --sidebar-primary-foreground: #0a1e2e;
-  --sidebar-accent: #2d5a9f;
+  --sidebar-primary: #f16a21;
+  --sidebar-primary-foreground: #1a1d3e;
+  --sidebar-accent: #2d307a;
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: #ff6b35;
+  --sidebar-ring: #f16a21;
 }
 
 @theme inline {
-  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
-  --font-sans: "Geist", "Geist Fallback";
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  /* Service IT+ Brand Fonts: Poppins (primary), Arial (secondary) */
+  --font-sans: "Poppins", Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+  --font-mono: "Courier New", Courier, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -165,5 +173,62 @@
 
   .platform-card {
     @apply rounded-xl border border-gray-200 bg-white p-6 transition-all hover:shadow-md;
+  }
+}
+
+@layer utilities {
+  /* Service IT+ Brand Gradients */
+  .gradient-brand-primary {
+    background: linear-gradient(135deg, #b9b6dd 0%, #2d307a 50%, #f79021 100%);
+  }
+  
+  .gradient-brand-orange-to-blue {
+    background: linear-gradient(180deg, #2d307a 0%, #b9b6dd 25%, #f79021 75%, #f16a21 100%);
+  }
+  
+  .gradient-brand-hero {
+    background: linear-gradient(135deg, #f16a21 0%, #f79021 50%, #2d307a 100%);
+  }
+  
+  .gradient-brand-subtle {
+    background: linear-gradient(135deg, #b9b6dd 0%, #f79021 100%);
+  }
+
+  /* Brand guide "soft blend" (matches the gradient image style) */
+  .gradient-brand-soft-blend {
+    background:
+      /* top-left: light lavender/sky highlight */
+      radial-gradient(80% 70% at 18% 20%, rgba(185, 182, 221, 0.95) 0%, rgba(185, 182, 221, 0) 62%),
+      radial-gradient(70% 60% at 18% 18%, rgba(186, 226, 255, 0.55) 0%, rgba(186, 226, 255, 0) 55%),
+
+      /* top-right: deep astronaut */
+      radial-gradient(85% 70% at 78% 18%, rgba(45, 48, 122, 0.98) 0%, rgba(45, 48, 122, 0) 62%),
+
+      /* center: primary orange */
+      radial-gradient(95% 85% at 46% 58%, rgba(241, 106, 33, 0.98) 0%, rgba(241, 106, 33, 0) 68%),
+
+      /* bottom-right: light orange */
+      radial-gradient(95% 90% at 80% 78%, rgba(247, 144, 33, 0.98) 0%, rgba(247, 144, 33, 0) 70%),
+
+      /* base vertical blend: blue -> orange */
+      linear-gradient(180deg, #2d307a 0%, #b9b6dd 28%, #f16a21 65%, #f79021 100%);
+  }
+
+  /* CTA overlay: brand blend + subtle vignette for white text readability */
+  .cta-brand-overlay {
+    background:
+      radial-gradient(110% 80% at 15% 20%, rgba(185, 182, 221, 0.55) 0%, rgba(185, 182, 221, 0) 58%),
+      radial-gradient(90% 70% at 82% 18%, rgba(45, 48, 122, 0.70) 0%, rgba(45, 48, 122, 0) 62%),
+      radial-gradient(90% 80% at 40% 65%, rgba(241, 106, 33, 0.55) 0%, rgba(241, 106, 33, 0) 70%),
+      radial-gradient(85% 75% at 82% 78%, rgba(247, 144, 33, 0.55) 0%, rgba(247, 144, 33, 0) 72%),
+      linear-gradient(180deg, rgba(45, 48, 122, 0.75) 0%, rgba(241, 106, 33, 0.55) 55%, rgba(247, 144, 33, 0.65) 100%);
+  }
+
+  /* Soft glow circles (decorative) */
+  .brand-glow-orange {
+    background: radial-gradient(circle at center, rgba(241, 106, 33, 0.55) 0%, rgba(241, 106, 33, 0) 65%);
+  }
+  .brand-glow-blue {
+    background: radial-gradient(circle at center, rgba(45, 48, 122, 0.50) 0%, rgba(45, 48, 122, 0) 65%);
   }
 }

@@ -64,12 +64,12 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-orange-600 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">S</span>
+      <header className="bg-gradient-to-r from-[#f16a21] via-[#f16a21] to-[#f79021] border-b border-orange-500/50 shadow-lg shadow-orange-900/10">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md">
+            <img src="/SERVICEITLOGO.png" alt="Service IT+ logo" className="w-8 h-8 object-contain" />
           </div>
-          <span className="font-semibold text-gray-900">Service IT+</span>
+          <span className="text-lg font-bold tracking-tight text-white">Service IT+</span>
         </nav>
       </header>
 
@@ -104,7 +104,7 @@ export default function SignupPage() {
                   value={formData.fullName}
                   onChange={handleChange}
                   placeholder="John Doe"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#f16a21] focus:border-transparent"
                 />
               </div>
 
@@ -116,7 +116,7 @@ export default function SignupPage() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="you@example.com"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#f16a21] focus:border-transparent"
                 />
               </div>
 
@@ -128,7 +128,7 @@ export default function SignupPage() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#f16a21] focus:border-transparent"
                 />
               </div>
 
@@ -140,14 +140,14 @@ export default function SignupPage() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#f16a21] focus:border-transparent"
                 />
               </div>
 
               <Button
                 type="submit"
                 disabled={isLoading || success}
-                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-2.5"
+                className="w-full bg-gradient-to-r from-[#f16a21] to-[#f79021] hover:from-[#f79021] hover:to-[#f16a21] text-white font-semibold py-3 rounded-xl shadow-lg shadow-orange-900/25 hover:shadow-xl hover:shadow-orange-900/30 hover:-translate-y-0.5 transition-all duration-200"
               >
                 {isLoading ? "Creating Account..." : "Create Account"}
               </Button>
@@ -156,7 +156,7 @@ export default function SignupPage() {
             <div className="mt-6 pt-6 border-t border-gray-200">
               <p className="text-sm text-gray-600 text-center">
                 Already have an account?{" "}
-                <Link href="/auth/login" className="font-medium text-orange-600 hover:text-orange-700">
+                <Link href="/auth/login" className="font-semibold text-[#f16a21] hover:text-[#f79021]">
                   Sign in
                 </Link>
               </p>

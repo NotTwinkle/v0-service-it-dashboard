@@ -19,7 +19,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"
-import { LogOut, Clock, Target, TrendingUp, AlertCircle, ChevronRight, Zap } from "lucide-react"
+import { LogOut, Clock, Target, TrendingUp, AlertCircle, ChevronRight, Zap, Menu, X } from "lucide-react"
 
 // Mock user data
 const userTaskData = [
@@ -44,12 +44,12 @@ const userTasks = [
   { id: 4, name: "Design new dashboard layout", project: "Alpha", estimated: 5, logged: 0, status: "Not Started" },
 ]
 
-const COLORS = ["#FF6B35", "#1B3A6B", "#5F6368", "#FF8C5A"]
+const COLORS = ["#f16a21", "#2d307a", "#979897", "#f79021"]
 
 const timeReconciliation = {
-  asana: { hours: 62, color: "#FF6B35", team: "Project Management" },
-  ivanti: { hours: 45, color: "#1B3A6B", team: "IT Support" },
-  timeTracker: { hours: 63, color: "#5F6368", team: "Time Logging" },
+  asana: { hours: 62, color: "#f16a21", team: "Project Management" },
+  ivanti: { hours: 45, color: "#2d307a", team: "IT Support" },
+  timeTracker: { hours: 63, color: "#979897", team: "Time Logging" },
 }
 
 const calculateTotal = () => {
@@ -315,6 +315,7 @@ export default function UserDashboard() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [todayLogged, setTodayLogged] = useState(7.5)
   const [selectedProjectId, setSelectedProjectId] = useState(1) // Add project selector state
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   useEffect(() => {
     // Check if user is authenticated
@@ -333,6 +334,29 @@ export default function UserDashboard() {
     router.push("/")
   }
 
+  // Close the menu on outside click / Escape
+  useEffect(() => {
+    if (!isMenuOpen) return
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsMenuOpen(false)
+    }
+
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null
+      if (!target) return
+      if (target.closest("[data-header-menu-root='true']")) return
+      setIsMenuOpen(false)
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+    window.addEventListener("pointerdown", onPointerDown)
+    return () => {
+      window.removeEventListener("keydown", onKeyDown)
+      window.removeEventListener("pointerdown", onPointerDown)
+    }
+  }, [isMenuOpen])
+
   if (!userEmail) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -345,42 +369,91 @@ export default function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
-      <header className="bg-gradient-to-r from-orange-600 via-orange-600 to-orange-700 border-b border-orange-500/50 shadow-lg shadow-orange-900/10 sticky top-0 z-40 backdrop-blur-sm">
+      <header className="bg-gradient-to-r from-[#f16a21] via-[#f16a21] to-[#f79021] border-b border-orange-500/50 shadow-lg shadow-orange-900/10 sticky top-0 z-40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-16 flex items-center justify-between text-white">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md ring-2 ring-white/20 group-hover:ring-white/40 transition-all duration-200 group-hover:scale-105">
-                <img src="/SERVICEITLOGO.png" alt="Service IT+" className="w-8 h-8 object-contain" />
+                <img src="/SERVICEITLOGO.png" alt="Service IT+ logo" className="w-8 h-8 object-contain" />
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-lg font-bold tracking-tight leading-tight">My Dashboard</h1>
                 <p className="text-[10px] text-orange-100 font-medium tracking-wide">Personal View</p>
               </div>
             </Link>
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-right hidden sm:block">
+            <div className="flex items-center gap-3 sm:gap-4" data-header-menu-root="true">
+              <div className="text-sm text-right hidden lg:block">
                 <p className="text-orange-100 text-xs font-medium">Signed in as</p>
                 <p className="font-semibold text-white">{userEmail}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <Link href="/dashboard">
-                  <Button variant="ghost" className="hidden md:flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
-                    Org Dashboard
-                  </Button>
-                </Link>
-                <Link href="/dashboard/reports">
-                  <Button variant="ghost" className="hidden md:flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
-                    Reports
-                  </Button>
-                </Link>
-                <Link href="/dashboard/tasks">
-                  <Button variant="ghost" className="hidden md:flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
-                    Tasks
-                  </Button>
-                </Link>
-                <Button onClick={handleLogout} variant="ghost" className="h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+              <div className="flex items-center gap-2 relative">
+                {/* Desktop nav (avoid crowding at md widths) */}
+                <Button asChild variant="ghost" className="hidden lg:inline-flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
+                  <Link href="/dashboard">Org Dashboard</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="hidden lg:inline-flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium"
+                >
+                  <Link href="/dashboard/reports">Reports</Link>
+                </Button>
+                <Button asChild variant="ghost" className="hidden lg:inline-flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
+                  <Link href="/dashboard/tasks">Tasks</Link>
+                </Button>
+
+                {/* Mid-size menu (md < lg) */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="hidden md:inline-flex lg:hidden text-white hover:bg-white/10"
+                  aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+                  aria-expanded={isMenuOpen}
+                  onClick={() => setIsMenuOpen((v) => !v)}
+                >
+                  {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                </Button>
+
+                {isMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-64 rounded-xl bg-white text-gray-900 shadow-xl ring-1 ring-black/10 overflow-hidden lg:hidden">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-xs text-gray-500 font-medium">Signed in as</p>
+                      <p className="text-sm font-semibold truncate">{userEmail}</p>
+                    </div>
+                    <div className="p-2">
+                      <Button
+                        asChild
+                        variant="ghost"
+                        className="w-full justify-start h-10 px-3 text-gray-800 hover:bg-gray-50"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Link href="/dashboard">Org Dashboard</Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="ghost"
+                        className="w-full justify-start h-10 px-3 text-gray-800 hover:bg-gray-50"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Link href="/dashboard/reports">Reports</Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="ghost"
+                        className="w-full justify-start h-10 px-3 text-gray-800 hover:bg-gray-50"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Link href="/dashboard/tasks">Tasks</Link>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Logout: compact on small screens */}
+                <Button onClick={handleLogout} variant="ghost" className="h-9 px-3 sm:px-4 text-white hover:bg-white/10 border-0 font-medium">
+                  <LogOut className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Logout</span>
                 </Button>
               </div>
             </div>
@@ -488,7 +561,7 @@ export default function UserDashboard() {
             {/* Asana */}
             <PlatformCard
               title="Asana"
-              color="#FF6B35"
+              color="#f16a21"
               icon={
                 <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
                   <span className="text-lg font-bold text-orange-600">A</span>
@@ -501,7 +574,7 @@ export default function UserDashboard() {
             {/* Ivanti */}
             <PlatformCard
               title="Ivanti"
-              color="#1B3A6B"
+              color="#2d307a"
               icon={
                 <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                   <span className="text-lg font-bold text-blue-600">I</span>
@@ -514,7 +587,7 @@ export default function UserDashboard() {
             {/* Time Tracker */}
             <PlatformCard
               title="Time Tracker"
-              color="#5F6368"
+              color="#979897"
               icon={
                 <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
                   <span className="text-lg font-bold text-gray-700">T</span>
@@ -570,7 +643,7 @@ export default function UserDashboard() {
                   </div>
                 </div>
               </div>
-              <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white rounded-lg">
+              <Button className="w-full bg-[#f16a21] hover:bg-[#f79021] text-white rounded-lg">
                 Review Discrepancies
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
@@ -615,8 +688,8 @@ export default function UserDashboard() {
                 <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="logged" stroke="#FF6B35" strokeWidth={2} name="Logged Hours" />
-                <Line type="monotone" dataKey="target" stroke="#1B3A6B" strokeWidth={2} name="Target Hours" />
+                <Line type="monotone" dataKey="logged" stroke="#f16a21" strokeWidth={2} name="Logged Hours" />
+                <Line type="monotone" dataKey="target" stroke="#2d307a" strokeWidth={2} name="Target Hours" />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -668,7 +741,7 @@ export default function UserDashboard() {
                       </td>
                       <td className="py-4 px-4 text-center">
                         <Link href={`/dashboard/time-tracker/${task.id}`}>
-                          <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white rounded">
+                          <Button size="sm" className="bg-[#f16a21] hover:bg-[#f79021] text-white rounded">
                             Log Time
                           </Button>
                         </Link>
@@ -688,7 +761,7 @@ export default function UserDashboard() {
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center shadow-sm ring-1 ring-orange-100 overflow-hidden">
-                <img src="/SERVICEITLOGO.png" alt="Service IT+" className="w-8 h-8 object-contain" />
+                <img src="/SERVICEITLOGO.png" alt="Service IT+ logo" className="w-8 h-8 object-contain" />
               </div>
               <div className="space-y-0.5">
                 <p className="text-sm font-semibold tracking-wide text-gray-900">

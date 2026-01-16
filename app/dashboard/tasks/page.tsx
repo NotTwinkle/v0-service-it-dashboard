@@ -114,7 +114,7 @@ function TasksContent() {
       case "High":
         return "text-red-600"
       case "Medium":
-        return "text-orange-600"
+        return "text-[#f16a21]"
       default:
         return "text-gray-600"
     }
@@ -142,7 +142,7 @@ function TasksContent() {
           </div>
           <div className="flex gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-[#f16a21]">
                 <Filter className="w-5 h-5" />
               </div>
               <select
@@ -184,7 +184,7 @@ function TasksContent() {
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-orange-600 transition-colors">{task.name}</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-[#f16a21] transition-colors">{task.name}</h3>
                     <div className="flex gap-4 mb-4 text-sm text-gray-600 flex-wrap">
                       <span className="inline-flex items-center gap-1.5 font-medium">📁 {task.project}</span>
                       <span className="inline-flex items-center gap-1.5 font-medium">🏢 {task.client}</span>
@@ -210,18 +210,18 @@ function TasksContent() {
                   <div className="text-right">
                     <div className="mb-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 mb-2">Time Progress</p>
-                      <p className="text-3xl font-extrabold text-orange-600 mb-2">
+                      <p className="text-3xl font-extrabold text-[#f16a21] mb-2">
                         {task.logged}/{task.estimated}h
                       </p>
                       <div className="w-28 bg-gray-100 rounded-full h-2.5 overflow-hidden">
                         <div
-                          className="bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 h-2.5 rounded-full transition-all duration-500"
+                          className="bg-gradient-to-r from-[#f16a21] via-[#f79021] to-[#f79021] h-2.5 rounded-full transition-all duration-500"
                           style={{ width: `${Math.min((task.logged / task.estimated) * 100, 100)}%` }}
                         />
                       </div>
                     </div>
                     <Link href={`/dashboard/time-tracker/${task.id}`}>
-                      <Button size="sm" className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-md shadow-orange-900/20 hover:shadow-lg hover:-translate-y-0.5 transition-all">
+                      <Button size="sm" className="bg-gradient-to-r from-[#f16a21] to-[#f79021] hover:from-[#f79021] hover:to-[#f16a21] text-white rounded-xl shadow-md shadow-orange-900/20 hover:shadow-lg hover:-translate-y-0.5 transition-all">
                         Log Time
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
@@ -275,7 +275,7 @@ export default function TasksPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-orange-600 via-orange-600 to-orange-700 border-b border-orange-500/50 shadow-lg shadow-orange-900/10 sticky top-0 z-40 backdrop-blur-sm">
+      <header className="bg-gradient-to-r from-[#f16a21] via-[#f16a21] to-[#f79021] border-b border-orange-500/50 shadow-lg shadow-orange-900/10 sticky top-0 z-40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between text-white">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2 group">
@@ -285,7 +285,7 @@ export default function TasksPage() {
             </Link>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md ring-2 ring-white/20">
-                <Zap className="w-6 h-6 text-orange-600" />
+                <Zap className="w-6 h-6 text-[#f16a21]" />
               </div>
               <div>
                 <h1 className="text-lg font-bold tracking-tight">Tasks</h1>
@@ -294,7 +294,7 @@ export default function TasksPage() {
             </div>
           </div>
           <Link href="/dashboard">
-            <Button className="h-9 px-6 bg-white text-orange-600 border-0 rounded-full shadow-md shadow-orange-900/20 hover:-translate-y-0.5 hover:scale-105 hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-900/30 active:scale-100 transition-all duration-200 ease-out font-semibold tracking-wide">
+            <Button className="h-9 px-6 bg-white text-[#f16a21] border-0 rounded-full shadow-md shadow-orange-900/20 hover:-translate-y-0.5 hover:scale-105 hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-900/30 active:scale-100 transition-all duration-200 ease-out font-semibold tracking-wide">
               Back to Dashboard
             </Button>
           </Link>

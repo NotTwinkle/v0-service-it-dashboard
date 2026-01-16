@@ -56,11 +56,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 flex flex-col">
       {/* Header */}
-      <header className="bg-gradient-to-r from-orange-600 via-orange-600 to-orange-700 border-b border-orange-500/50 shadow-lg shadow-orange-900/10 backdrop-blur-sm">
+      <header className="bg-gradient-to-r from-[#f16a21] via-[#f16a21] to-[#f79021] border-b border-orange-500/50 shadow-lg shadow-orange-900/10 backdrop-blur-sm">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between text-white">
           <Link href="/" onClick={handleLogoClick} className="flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md ring-2 ring-white/20 group-hover:ring-white/40 transition-all duration-200 group-hover:scale-105">
-              <img src="/SERVICEITLOGO.png" alt="Service IT+" className="w-8 h-8 object-contain" />
+              <img src="/SERVICEITLOGO.png" alt="Service IT+ logo" className="w-8 h-8 object-contain" />
             </div>
             <div className="hidden sm:block">
               <span className="text-lg font-bold tracking-tight">Service IT+</span>
@@ -128,7 +128,7 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
-                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#f16a21] focus:border-transparent transition-all duration-200 hover:border-gray-400"
                     />
                   </div>
                 </div>
@@ -137,7 +137,7 @@ export default function LoginPage() {
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 focus:ring-offset-0 cursor-pointer"
+                      className="w-4 h-4 rounded border-gray-300 text-[#f16a21] focus:ring-[#f16a21] focus:ring-offset-0 cursor-pointer"
                     />
                     <span className="text-gray-600 group-hover:text-gray-900 transition-colors">
                       Remember me
@@ -145,7 +145,7 @@ export default function LoginPage() {
                   </label>
                   <Link
                     href="#"
-                    className="text-orange-600 hover:text-orange-700 font-medium transition-colors"
+                    className="text-[#f16a21] hover:text-[#f79021] font-medium transition-colors"
                   >
                     Forgot password?
                   </Link>
@@ -154,7 +154,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold py-3 rounded-xl shadow-lg shadow-orange-900/25 hover:shadow-xl hover:shadow-orange-900/30 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                  className="w-full bg-gradient-to-r from-[#f16a21] to-[#f79021] hover:from-[#f79021] hover:to-[#f16a21] text-white font-semibold py-3 rounded-xl shadow-lg shadow-orange-900/25 hover:shadow-xl hover:shadow-orange-900/30 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                 >
                   {isLoading ? (
                     <span className="flex items-center gap-2">
@@ -175,7 +175,7 @@ export default function LoginPage() {
                   Don't have an account?{" "}
                   <Link
                     href="/auth/signup"
-                    className="font-semibold text-orange-600 hover:text-orange-700 transition-colors"
+                    className="font-semibold text-[#f16a21] hover:text-[#f79021] transition-colors"
                   >
                     Sign up
                   </Link>

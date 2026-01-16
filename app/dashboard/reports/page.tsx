@@ -35,7 +35,7 @@ export default function ReportsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-orange-600 via-orange-600 to-orange-700 border-b border-orange-500/50 shadow-lg shadow-orange-900/10 sticky top-0 z-40 backdrop-blur-sm">
+      <header className="bg-gradient-to-r from-[#f16a21] via-[#f16a21] to-[#f79021] border-b border-orange-500/50 shadow-lg shadow-orange-900/10 sticky top-0 z-40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between text-white">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2 group">
@@ -45,7 +45,7 @@ export default function ReportsPage() {
             </Link>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md ring-2 ring-white/20">
-                <BarChart3 className="w-6 h-6 text-orange-600" />
+                <BarChart3 className="w-6 h-6 text-[#f16a21]" />
               </div>
               <div>
                 <h1 className="text-lg font-bold tracking-tight">Reports & Analytics</h1>
@@ -54,7 +54,7 @@ export default function ReportsPage() {
             </div>
           </div>
           <Link href="/dashboard">
-            <Button className="h-9 px-6 bg-white text-orange-600 border-0 rounded-full shadow-md shadow-orange-900/20 hover:-translate-y-0.5 hover:scale-105 hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-900/30 active:scale-100 transition-all duration-200 ease-out font-semibold tracking-wide">
+            <Button className="h-9 px-6 bg-white text-[#f16a21] border-0 rounded-full shadow-md shadow-orange-900/20 hover:-translate-y-0.5 hover:scale-105 hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-900/30 active:scale-100 transition-all duration-200 ease-out font-semibold tracking-wide">
               Back to Dashboard
             </Button>
           </Link>
@@ -77,8 +77,8 @@ export default function ReportsPage() {
                 <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="estimated" fill="#1B3A6B" radius={[4, 4, 0, 0]} name="Estimated (160h)" />
-                <Bar dataKey="actual" fill="#FF6B35" radius={[4, 4, 0, 0]} name="Actual Logged" />
+                <Bar dataKey="estimated" fill="#2d307a" radius={[4, 4, 0, 0]} name="Estimated (160h)" />
+                <Bar dataKey="actual" fill="#f16a21" radius={[4, 4, 0, 0]} name="Actual Logged" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -96,7 +96,7 @@ export default function ReportsPage() {
                 {clientBreakdown.map((client) => (
                   <div key={client.name} className="group">
                     <div className="flex items-center justify-between mb-2.5">
-                      <span className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">{client.name}</span>
+                      <span className="font-semibold text-gray-900 group-hover:text-[#f16a21] transition-colors">{client.name}</span>
                       <div className="flex items-center gap-2">
                         <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
                           {client.hours}h
@@ -108,7 +108,7 @@ export default function ReportsPage() {
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 h-2.5 rounded-full transition-all duration-500 ease-out group-hover:from-orange-700 group-hover:via-orange-600 group-hover:to-orange-500"
+                        className="bg-gradient-to-r from-[#f16a21] via-[#f79021] to-[#f79021] h-2.5 rounded-full transition-all duration-500 ease-out group-hover:from-[#f79021] group-hover:via-[#f16a21] group-hover:to-[#f16a21]"
                         style={{ width: `${client.percentage}%` }}
                       />
                     </div>
@@ -133,7 +133,7 @@ export default function ReportsPage() {
                 <p className="text-4xl font-extrabold text-blue-700 group-hover:scale-105 transition-transform">98%</p>
               </div>
               <div className="p-5 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-200 hover:shadow-md transition-shadow group">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-600 mb-2">On-Time Completion</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#f16a21] mb-2">On-Time Completion</p>
                 <p className="text-4xl font-extrabold text-orange-700 group-hover:scale-105 transition-transform">85%</p>
               </div>
             </CardContent>

@@ -61,7 +61,7 @@ const teamBreakdown = [
   { name: "Management", members: 4, hours: 160, compliance: 100 },
 ]
 
-const COLORS = ["#FF6B35", "#1B3A6B", "#5F6368", "#FF8C5A", "#2D5A9F"]
+const COLORS = ["#f16a21", "#2d307a", "#979897", "#f79021", "#b9b6dd"]
 
 export default function PublicDashboard() {
   const [selectedClient, setSelectedClient] = useState<string | null>(null)
@@ -80,12 +80,12 @@ export default function PublicDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-orange-600 via-orange-600 to-orange-700 border-b border-orange-500/50 shadow-lg shadow-orange-900/10 sticky top-0 z-40 backdrop-blur-sm">
+      <header className="bg-gradient-to-r from-[#f16a21] via-[#f16a21] to-[#f79021] border-b border-orange-500/50 shadow-lg shadow-orange-900/10 sticky top-0 z-40 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-16 flex items-center justify-between text-white">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md ring-2 ring-white/20 group-hover:ring-white/40 transition-all duration-200 group-hover:scale-105">
-                <img src="/SERVICEITLOGO.png" alt="Service IT+" className="w-8 h-8 object-contain" />
+                <img src="/SERVICEITLOGO.png" alt="Service IT+ logo" className="w-8 h-8 object-contain" />
               </div>
               <div>
                 <h1 className="text-lg font-bold tracking-tight leading-tight">Service IT+ Dashboard</h1>
@@ -110,7 +110,7 @@ export default function PublicDashboard() {
                 </Button>
               </Link>
               <Link href="/auth/login">
-                <Button className="h-9 px-6 bg-white text-orange-600 border-0 rounded-full shadow-md shadow-orange-900/20 hover:-translate-y-0.5 hover:scale-105 hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-900/30 active:scale-100 transition-all duration-200 ease-out font-semibold tracking-wide">
+                <Button className="h-9 px-6 bg-white text-[#f16a21] border-0 rounded-full shadow-md shadow-orange-900/20 hover:-translate-y-0.5 hover:scale-105 hover:bg-orange-50 hover:shadow-lg hover:shadow-orange-900/30 active:scale-100 transition-all duration-200 ease-out font-semibold tracking-wide">
                   Sign In
                 </Button>
               </Link>
@@ -124,7 +124,7 @@ export default function PublicDashboard() {
         {/* Filters */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8 hover:shadow-md transition-shadow">
           <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-[#f16a21]">
               <Filter className="w-5 h-5" />
             </div>
             <div className="flex gap-3 flex-wrap">
@@ -179,7 +179,7 @@ export default function PublicDashboard() {
               <CardTitle className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Active Users</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-extrabold text-orange-600">{totalUsers}</p>
+              <p className="text-4xl font-extrabold text-[#f16a21]">{totalUsers}</p>
               <p className="text-sm text-gray-600 mt-2 font-medium">Across all platforms</p>
             </CardContent>
           </Card>
@@ -206,7 +206,7 @@ export default function PublicDashboard() {
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-                    <span className="text-lg font-bold text-orange-600">A</span>
+                    <span className="text-lg font-bold text-[#f16a21]">A</span>
                   </div>
                   <CardTitle className="text-lg font-bold text-gray-900">Asana</CardTitle>
                 </div>
@@ -215,7 +215,7 @@ export default function PublicDashboard() {
                 <div className="space-y-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Total Hours</p>
-                    <p className="text-3xl font-extrabold text-orange-600">{platformReconciliation.asana.totalHours}h</p>
+                    <p className="text-3xl font-extrabold text-[#f16a21]">{platformReconciliation.asana.totalHours}h</p>
                   </div>
                   <div className="pt-3 border-t border-gray-200">
                     <p className="text-xs text-gray-600 mb-1">Active Users</p>
@@ -324,10 +324,10 @@ export default function PublicDashboard() {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-                          <Users className="w-5 h-5 text-orange-600" />
+                          <Users className="w-5 h-5 text-[#f16a21]" />
                         </div>
                         <div>
-                          <span className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">{team.name}</span>
+                          <span className="font-semibold text-gray-900 group-hover:text-[#f16a21] transition-colors">{team.name}</span>
                           <p className="text-xs text-gray-500">{team.members} members</p>
                         </div>
                       </div>
@@ -338,7 +338,7 @@ export default function PublicDashboard() {
                         </div>
                         <div className="text-right">
                           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Compliance</p>
-                          <p className={`text-xl font-bold ${team.compliance >= 95 ? "text-emerald-600" : team.compliance >= 90 ? "text-orange-600" : "text-red-600"}`}>
+                          <p className={`text-xl font-bold ${team.compliance >= 95 ? "text-emerald-600" : team.compliance >= 90 ? "text-[#f16a21]" : "text-red-600"}`}>
                             {team.compliance}%
                           </p>
                         </div>
@@ -350,7 +350,7 @@ export default function PublicDashboard() {
                           team.compliance >= 95
                             ? "bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-400"
                             : team.compliance >= 90
-                              ? "bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400"
+                              ? "bg-gradient-to-r from-[#f16a21] via-[#f79021] to-[#f79021]"
                               : "bg-gradient-to-r from-red-600 via-red-500 to-red-400"
                         }`}
                         style={{ width: `${team.compliance}%` }}
@@ -408,8 +408,8 @@ export default function PublicDashboard() {
                   <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="estimated" fill="#FF6B35" radius={[4, 4, 0, 0]} name="Estimated (Team Total)" />
-                  <Bar dataKey="actual" fill="#1B3A6B" radius={[4, 4, 0, 0]} name="Actual Logged (All Teams)" />
+                  <Bar dataKey="estimated" fill="#f16a21" radius={[4, 4, 0, 0]} name="Estimated (Team Total)" />
+                  <Bar dataKey="actual" fill="#2d307a" radius={[4, 4, 0, 0]} name="Actual Logged (All Teams)" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -428,7 +428,7 @@ export default function PublicDashboard() {
                 <div key={project.name} className="group">
                   <div className="flex items-center justify-between mb-2.5">
                     <div>
-                      <span className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors block">{project.name}</span>
+                      <span className="font-semibold text-gray-900 group-hover:text-[#f16a21] transition-colors block">{project.name}</span>
                       <span className="text-xs text-gray-500">{project.teamMembers} team members</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -442,7 +442,7 @@ export default function PublicDashboard() {
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 h-2.5 rounded-full transition-all duration-500 ease-out group-hover:from-orange-700 group-hover:via-orange-600 group-hover:to-orange-500"
+                      className="bg-gradient-to-r from-[#f16a21] via-[#f79021] to-[#f79021] h-2.5 rounded-full transition-all duration-500 ease-out group-hover:from-[#f79021] group-hover:via-[#f16a21] group-hover:to-[#f16a21]"
                       style={{ width: `${project.completion}%` }}
                     />
                   </div>
@@ -459,7 +459,7 @@ export default function PublicDashboard() {
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center shadow-sm ring-1 ring-orange-100 overflow-hidden">
-                <img src="/SERVICEITLOGO.png" alt="Service IT+" className="w-8 h-8 object-contain" />
+                <img src="/SERVICEITLOGO.png" alt="Service IT+ logo" className="w-8 h-8 object-contain" />
               </div>
               <div className="space-y-0.5">
                 <p className="text-sm font-semibold tracking-wide text-gray-900">
