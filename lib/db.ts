@@ -39,11 +39,11 @@ export function getDbPool(): mysql.Pool {
 export async function getDbConnection(database?: string): Promise<mysql.PoolConnection> {
   const connectionPool = getDbPool()
   const connection = await connectionPool.getConnection()
-  
+
   if (database) {
     await connection.changeUser({ database })
   }
-  
+
   return connection
 }
 
@@ -126,6 +126,7 @@ export async function getTableRowCount(
 
 /**
  * Get table data with pagination
+ * Orders by primary key or date column in descending order (latest first)
  */
 export async function getTableData(
   database: string,
@@ -141,9 +142,38 @@ export async function getTableData(
     )
     const total = countRows[0]?.count || 0
 
-    // Get paginated data
+    // Get table structure to determine ordering column
+    const columns = await getTableStructure(database, table)
+    
+    // Find primary key column
+    const primaryKey = columns.find(col => col.Key === 'PRI')
+    
+    // Find date/timestamp columns (prefer these for ordering)
+    const dateColumns = columns.filter(col => {
+      const type = col.Type.toLowerCase()
+      return type.includes('date') || type.includes('timestamp') || type.includes('datetime')
+    })
+    
+    // Determine order by column: prefer date columns, then primary key
+    let orderBy = ''
+    if (dateColumns.length > 0) {
+      // Use the first date column found (common ones: date, created_at, action_timestamp)
+      const preferredDateCol = dateColumns.find(col => 
+        col.Field.toLowerCase().includes('date') || 
+        col.Field.toLowerCase().includes('timestamp') ||
+        col.Field.toLowerCase().includes('created') ||
+        col.Field.toLowerCase().includes('updated')
+      ) || dateColumns[0]
+      orderBy = `ORDER BY \`${preferredDateCol.Field}\` DESC`
+    } else if (primaryKey) {
+      // Use primary key if no date column found
+      orderBy = `ORDER BY \`${primaryKey.Field}\` DESC`
+    }
+    // If no primary key or date column, no ordering (fallback to default)
+
+    // Get paginated data with ordering
     const [rows] = await connection.execute<mysql.RowDataPacket[]>(
-      `SELECT * FROM \`${table}\` LIMIT ? OFFSET ?`,
+      `SELECT * FROM \`${table}\` ${orderBy} LIMIT ? OFFSET ?`,
       [limit, offset]
     )
 

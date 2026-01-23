@@ -2,10 +2,11 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { LenisProvider } from "@/components/providers/LenisProvider"
 import "./globals.css"
 
 // Primary font: Poppins (Regular, Medium, Bold)
-const poppins = Poppins({ 
+const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
   variable: "--font-poppins",
@@ -44,8 +45,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.className} antialiased bg-white`}>
-        {children}
-        <Analytics />
+        <LenisProvider>
+          {children}
+          <Analytics />
+        </LenisProvider>
       </body>
     </html>
   )

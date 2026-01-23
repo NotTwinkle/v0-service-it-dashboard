@@ -66,7 +66,7 @@ export default function ReportsPage() {
         {/* Monthly Compliance */}
         <Card className="bg-white border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-200 mb-8">
           <CardHeader>
-            <CardTitle className="text-xl font-bold text-gray-900">Monthly Time Compliance</CardTitle>
+            <CardTitle className="text-xl font-bold text-[#404040]">Monthly Time Compliance</CardTitle>
             <CardDescription className="text-gray-600">Estimated vs Actual hours logged per month</CardDescription>
           </CardHeader>
           <CardContent>
@@ -88,7 +88,7 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <Card className="bg-white border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-200">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-900">Hours by Client</CardTitle>
+              <CardTitle className="text-xl font-bold text-[#404040]">Hours by Client</CardTitle>
               <CardDescription className="text-gray-600">Time allocation across clients (Current Month)</CardDescription>
             </CardHeader>
             <CardContent>
@@ -96,7 +96,7 @@ export default function ReportsPage() {
                 {clientBreakdown.map((client) => (
                   <div key={client.name} className="group">
                     <div className="flex items-center justify-between mb-2.5">
-                      <span className="font-semibold text-gray-900 group-hover:text-[#f16a21] transition-colors">{client.name}</span>
+                      <span className="font-semibold text-[#404040] group-hover:text-[#f16a21] transition-colors">{client.name}</span>
                       <div className="flex items-center gap-2">
                         <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
                           {client.hours}h
@@ -120,7 +120,7 @@ export default function ReportsPage() {
 
           <Card className="bg-white border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-200">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-900">Key Metrics</CardTitle>
+              <CardTitle className="text-xl font-bold text-[#404040]">Key Metrics</CardTitle>
               <CardDescription className="text-gray-600">Performance overview</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

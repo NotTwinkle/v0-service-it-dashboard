@@ -5,57 +5,40 @@
 
 :root {
   /* Service IT+ Brand Colors */
-  --orange-primary: #f16a21; /* Primary Orange RGB(241, 106, 33) */
-  --orange-light: #f79021; /* Light Orange RGB(247, 144, 33) */
-  --astronaut: #2d307a; /* Astronaut Blue RGB(45, 48, 122) */
-  --grey-primary: #979897; /* Grey RGB(151, 152, 151) */
-  --lavender: #b9b6dd; /* Lavender RGB(185, 182, 221) */
-  
-  /* Legacy color aliases */
-  --navy-primary: #2d307a;
-  --white-bg: #ffffff;
-  --gray-50: #f8f9fa;
-  --gray-100: #f0f2f5;
-  --gray-200: #e8eaed;
-  --gray-300: #d8d9db;
-  --gray-400: #c5c7cc;
-  --gray-500: #979897;
-  --gray-600: #5f6368;
-  --gray-700: #3c4043;
+  --orange-primary: #f16a21;
+  /* High-impact actions */
+  --orange-light: #f79021;
+  /* Gradients/Glows */
+  --astronaut: #2d307a;
+  /* Primary Text / Strong Accents */
+  --grey-primary: #979897;
+  /* Subtext / Borders */
+  --lavender: #b9b6dd;
+  /* Secondary Accents */
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  /* Theme Tokens */
+  --background: #ffffff;
+  --foreground: #2d307a;
+  /* Deep Blue for primary text */
+  --card: #ffffff;
+  --card-foreground: #2d307a;
+  --popover: #ffffff;
+  --popover-foreground: #2d307a;
   --primary: #f16a21;
-  --primary-foreground: oklch(0.985 0 0);
+  --primary-foreground: #ffffff;
   --secondary: #2d307a;
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: #f16a21;
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --secondary-foreground: #ffffff;
+  --muted: #f8f9fa;
+  --muted-foreground: #979897;
+  --accent: #f8f9fa;
+  --accent-foreground: #2d307a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
   --ring: #f16a21;
-  --chart-1: #f16a21;
-  --chart-2: #2d307a;
-  --chart-3: #979897;
-  --chart-4: #f79021;
-  --chart-5: #b9b6dd;
+
   --radius: 0.5rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #2d307a;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: #f16a21;
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: #f16a21;
 }
 
 .dark {
@@ -134,15 +117,24 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Service IT+ Brand Colors */
+  --color-lavender: var(--lavender);
+  --color-astronaut: var(--astronaut);
+  --color-orange-primary: var(--orange-primary);
+  --color-orange-light: var(--orange-light);
+  --color-grey-primary: var(--grey-primary);
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
   }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -150,9 +142,11 @@
   h1 {
     @apply text-3xl font-bold tracking-tight;
   }
+
   h2 {
     @apply text-2xl font-bold tracking-tight;
   }
+
   h3 {
     @apply text-lg font-semibold;
   }
@@ -177,19 +171,20 @@
 }
 
 @layer utilities {
+
   /* Service IT+ Brand Gradients */
   .gradient-brand-primary {
     background: linear-gradient(135deg, #b9b6dd 0%, #2d307a 50%, #f79021 100%);
   }
-  
+
   .gradient-brand-orange-to-blue {
     background: linear-gradient(180deg, #2d307a 0%, #b9b6dd 25%, #f79021 75%, #f16a21 100%);
   }
-  
+
   .gradient-brand-hero {
     background: linear-gradient(135deg, #f16a21 0%, #f79021 50%, #2d307a 100%);
   }
-  
+
   .gradient-brand-subtle {
     background: linear-gradient(135deg, #b9b6dd 0%, #f79021 100%);
   }
@@ -228,6 +223,7 @@
   .brand-glow-orange {
     background: radial-gradient(circle at center, rgba(241, 106, 33, 0.55) 0%, rgba(241, 106, 33, 0) 65%);
   }
+
   .brand-glow-blue {
     background: radial-gradient(circle at center, rgba(45, 48, 122, 0.50) 0%, rgba(45, 48, 122, 0) 65%);
   }

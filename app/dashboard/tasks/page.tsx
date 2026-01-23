@@ -125,7 +125,7 @@ function TasksContent() {
       {/* Search and Filters */}
       <Card className="bg-white border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow mb-8">
         <CardHeader className="pb-3">
-          <CardTitle className="text-xl font-bold text-gray-900">Search & Filter</CardTitle>
+          <CardTitle className="text-xl font-bold text-[#404040]">Search & Filter</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2">
@@ -184,7 +184,7 @@ function TasksContent() {
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-[#f16a21] transition-colors">{task.name}</h3>
+                    <h3 className="text-lg font-bold text-[#404040] mb-3 group-hover:text-[#f16a21] transition-colors">{task.name}</h3>
                     <div className="flex gap-4 mb-4 text-sm text-gray-600 flex-wrap">
                       <span className="inline-flex items-center gap-1.5 font-medium">📁 {task.project}</span>
                       <span className="inline-flex items-center gap-1.5 font-medium">🏢 {task.client}</span>

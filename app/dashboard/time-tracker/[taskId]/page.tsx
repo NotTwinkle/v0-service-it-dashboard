@@ -167,7 +167,7 @@ export default function TimeTrackerPage() {
           <div className="lg:col-span-2">
             <Card className="bg-white border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-200">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold text-gray-900">{task.name}</CardTitle>
+                <CardTitle className="text-2xl font-bold text-[#404040]">{task.name}</CardTitle>
                 <CardDescription className="text-gray-600">Log your time for this task</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -175,19 +175,19 @@ export default function TimeTrackerPage() {
                 <div className="grid grid-cols-2 gap-4 p-5 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl border border-gray-200">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 mb-2">Project</p>
-                    <p className="text-sm font-bold text-gray-900">{task.project}</p>
+                    <p className="text-sm font-bold text-[#404040]">{task.project}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 mb-2">Client</p>
-                    <p className="text-sm font-bold text-gray-900">{task.client}</p>
+                    <p className="text-sm font-bold text-[#404040]">{task.client}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 mb-2">Initiative</p>
-                    <p className="text-sm font-bold text-gray-900">{task.initiative}</p>
+                    <p className="text-sm font-bold text-[#404040]">{task.initiative}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 mb-2">Source System</p>
-                    <p className="text-sm font-bold text-gray-900">{task.source}</p>
+                    <p className="text-sm font-bold text-[#404040]">{task.source}</p>
                   </div>
                 </div>
 
@@ -212,7 +212,7 @@ export default function TimeTrackerPage() {
                 {/* Time Entry Form */}
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-900">Hours Spent Today</label>
+                    <label className="block text-sm font-semibold text-[#404040]">Hours Spent Today</label>
                     <div className="flex gap-3">
                       <input
                         type="number"
@@ -229,7 +229,7 @@ export default function TimeTrackerPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-900">Notes (Optional)</label>
+                    <label className="block text-sm font-semibold text-[#404040]">Notes (Optional)</label>
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
@@ -262,12 +262,12 @@ export default function TimeTrackerPage() {
           <div className="lg:col-span-1">
             <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 rounded-2xl shadow-sm">
               <CardHeader>
-                <CardTitle className="text-lg font-bold text-gray-900">Quick Summary</CardTitle>
+                <CardTitle className="text-lg font-bold text-[#404040]">Quick Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="p-5 bg-white rounded-xl border border-orange-200 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 mb-2">Status</p>
-                  <p className="text-lg font-bold text-gray-900">In Progress</p>
+                  <p className="text-lg font-bold text-[#404040]">In Progress</p>
                 </div>
 
                 <div className="p-5 bg-white rounded-xl border border-orange-200 shadow-sm">
@@ -278,14 +278,14 @@ export default function TimeTrackerPage() {
                       style={{ width: `${Math.min((task.logged / task.estimated) * 100, 100)}%` }}
                     />
                   </div>
-                  <p className="text-lg font-bold text-gray-900">
+                  <p className="text-lg font-bold text-[#404040]">
                     {((task.logged / task.estimated) * 100).toFixed(0)}% Complete
                   </p>
                 </div>
 
                 <div className="p-5 bg-white rounded-xl border border-orange-200 shadow-sm">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 mb-2">Est. Completion</p>
-                  <p className="text-lg font-bold text-gray-900">
+                  <p className="text-lg font-bold text-[#404040]">
                     {remainingHours > 0 ? "Not yet completed" : "Completed"}
                   </p>
                 </div>

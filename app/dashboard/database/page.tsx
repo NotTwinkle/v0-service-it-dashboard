@@ -104,17 +104,30 @@ export default function DatabaseExplorerPage() {
   }
 
   const fetchTableData = async (database: string, table: string, offset: number = 0) => {
+    if (!table || table === 'undefined') {
+      console.error("Invalid table name:", table)
+      alert("Error: Invalid table name")
+      return
+    }
+    
     setLoadingData(true)
+    setTableData(null) // Clear previous data while loading
     try {
+      // Encode the table name to handle special characters
+      const encodedTable = encodeURIComponent(table)
       const response = await fetch(
-        `/api/db/tables/${table}?database=${database}&limit=50&offset=${offset}`
+        `/api/db/tables/${encodedTable}?database=${encodeURIComponent(database)}&limit=50&offset=${offset}`
       )
       const result = await response.json()
       if (result.success) {
         setTableData(result)
+      } else {
+        console.error("Failed to fetch table data:", result.error)
+        alert(`Error: ${result.error || 'Failed to fetch table data'}`)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching table data:", error)
+      alert(`Error: ${error.message || 'Failed to fetch table data'}`)
     } finally {
       setLoadingData(false)
     }
@@ -218,28 +231,37 @@ export default function DatabaseExplorerPage() {
                 <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {tables.map((table) => (
                     <div key={table.name} className="border border-gray-200 rounded-md">
-                      <button
-                        onClick={() => {
-                          toggleTableExpansion(table.name)
-                          setSelectedTable(table.name)
-                        }}
-                        className={`w-full px-3 py-2 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
-                          selectedTable === table.name ? "bg-orange-50" : ""
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <Table className="h-3 w-3 text-gray-500 flex-shrink-0" />
-                          <span className="text-sm font-medium truncate">{table.name}</span>
-                          <span className="text-xs text-gray-500 ml-auto">
-                            {table.rowCount.toLocaleString()}
-                          </span>
-                        </div>
-                        {expandedTables.has(table.name) ? (
-                          <ChevronUp className="h-3 w-3 text-gray-500 flex-shrink-0 ml-2" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3 text-gray-500 flex-shrink-0 ml-2" />
-                        )}
-                      </button>
+                      <div className="flex items-center">
+                        <button
+                          onClick={() => {
+                            setSelectedTable(table.name)
+                          }}
+                          className={`flex-1 px-3 py-2 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
+                            selectedTable === table.name ? "bg-orange-50" : ""
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <Table className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                            <span className="text-sm font-medium truncate">{table.name}</span>
+                            <span className="text-xs text-gray-500 ml-auto">
+                              {table.rowCount.toLocaleString()}
+                            </span>
+                          </div>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleTableExpansion(table.name)
+                          }}
+                          className="px-2 py-2 hover:bg-gray-50 transition-colors"
+                        >
+                          {expandedTables.has(table.name) ? (
+                            <ChevronUp className="h-3 w-3 text-gray-500" />
+                          ) : (
+                            <ChevronDown className="h-3 w-3 text-gray-500" />
+                          )}
+                        </button>
+                      </div>
                       
                       {expandedTables.has(table.name) && (
                         <div className="px-3 py-2 bg-gray-50 border-t border-gray-200">
@@ -270,7 +292,14 @@ export default function DatabaseExplorerPage() {
 
           {/* Right Side - Table Data */}
           <div className="lg:col-span-2">
-            {selectedTable && tableData ? (
+            {selectedTable && loadingData && !tableData ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Loader2 className="h-12 w-12 text-orange-500 mx-auto mb-4 animate-spin" />
+                  <p className="text-gray-500">Loading table data...</p>
+                </CardContent>
+              </Card>
+            ) : selectedTable && tableData ? (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base flex items-center justify-between">

@@ -7,14 +7,27 @@ import { getTableData, getTableStructure } from '@/lib/db'
  */
 export async function GET(
   request: Request,
-  { params }: { params: { table: string } }
+  context: { params: Promise<{ table: string }> | { table: string } }
 ) {
   try {
     const { searchParams } = new URL(request.url)
     const database = searchParams.get('database') || 'time_trackingv2'
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
-    const table = params.table
+    
+    // Handle both sync and async params (Next.js 15+ uses async params)
+    const params = context.params instanceof Promise ? await context.params : context.params
+    const table = decodeURIComponent(params.table || '')
+
+    if (!table || table === 'undefined' || table === '') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Table name is required. Received: ${JSON.stringify(params)}`,
+        },
+        { status: 400 }
+      )
+    }
 
     const [tableData, structure] = await Promise.all([
       getTableData(database, table, limit, offset),

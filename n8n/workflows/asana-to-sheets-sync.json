@@ -1,0 +1,240 @@
+{
+  "name": "Asana to Google Sheets - Update Estimated Hours",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "schedule-daily",
+      "name": "Schedule Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1uYHGyAi0a2GriocwAl3FD3OI3w4pUqXqGNLLKrwq-w4"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 379667821,
+          "mode": "list",
+          "cachedResultName": "Project"
+        },
+        "options": {
+          "range": "A2:E1000",
+          "useFirstRowAsHeaders": true
+        }
+      },
+      "id": "read-sheet",
+      "name": "Read Project Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [470, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "filter-active",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "Active",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-active-projects",
+      "name": "Filter Active Projects",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "preserve-project-id",
+              "name": "_projectId",
+              "value": "={{ $json['Project ID'] }}",
+              "type": "string"
+            },
+            {
+              "id": "preserve-project-id-original",
+              "name": "Project ID",
+              "value": "={{ $json['Project ID'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "preserve-project-id",
+      "name": "Preserve Project ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "resource": "project",
+        "id": "={{ $json['Project ID'] }}"
+      },
+      "id": "get-asana-project",
+      "name": "Get Asana Project",
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "credentials": {
+        "asanaApi": {
+          "id": "asana",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "project": "={{ $json.gid }}"
+        },
+        "options": {
+          "optFields": "name,gid,completed,custom_fields"
+        }
+      },
+      "id": "get-tasks",
+      "name": "Get Project Tasks",
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [1070, 300],
+      "credentials": {
+        "asanaApi": {
+          "id": "asana",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Calculate estimated hours for THIS project's tasks only\nconst tasks = $input.all();\n\n// Get Project ID from task data (preserved through execution chain)\nconst firstTask = $input.first();\nconst projectId = firstTask.json._projectId || firstTask.json['Project ID'];\n\n// Calculate total estimated hours from all tasks for THIS project\nlet totalEstimated = 0;\n\ntasks.forEach(item => {\n  const task = item.json;\n  \n  if (task.custom_fields && Array.isArray(task.custom_fields)) {\n    const hoursField = task.custom_fields.find(f => \n      f.name && (f.name.toLowerCase().includes('hour') || \n                 f.name.toLowerCase().includes('estimate') ||\n                 f.name.toLowerCase().includes('time'))\n    );\n    \n    if (hoursField && hoursField.number_value) {\n      totalEstimated += parseFloat(hoursField.number_value);\n    } else {\n      totalEstimated += 4;\n    }\n  } else {\n    totalEstimated += 4;\n  }\n});\n\nreturn [{\n  json: {\n    'Project ID': projectId,\n    'Estimated Hours': Math.round(totalEstimated * 100) / 100\n  }\n}];"
+      },
+      "id": "calculate-hours",
+      "name": "Calculate Estimated Hours",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1290, 300]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1uYHGyAi0a2GriocwAl3FD3OI3w4pUqXqGNLLKrwq-w4"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 379667821,
+          "mode": "list",
+          "cachedResultName": "Project"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": ["Project ID"],
+          "schema": [
+            {
+              "id": "Project ID",
+              "displayName": "Project ID",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Estimated Hours",
+              "displayName": "Estimated Hours",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "update-sheet",
+      "name": "Update Sheet with Estimated Hours",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [1510, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "google-sheets",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Daily": {
+      "main": [[{"node": "Read Project Sheet", "type": "main", "index": 0}]]
+    },
+    "Read Project Sheet": {
+      "main": [[{"node": "Filter Active Projects", "type": "main", "index": 0}]]
+    },
+    "Filter Active Projects": {
+      "main": [[{"node": "Preserve Project ID", "type": "main", "index": 0}]]
+    },
+    "Preserve Project ID": {
+      "main": [[{"node": "Get Asana Project", "type": "main", "index": 0}]]
+    },
+    "Get Asana Project": {
+      "main": [[{"node": "Get Project Tasks", "type": "main", "index": 0}]]
+    },
+    "Get Project Tasks": {
+      "main": [[{"node": "Calculate Estimated Hours", "type": "main", "index": 0}]]
+    },
+    "Calculate Estimated Hours": {
+      "main": [[{"node": "Update Sheet with Estimated Hours", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

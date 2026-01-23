@@ -19,315 +19,240 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"
-import { LogOut, Clock, Target, TrendingUp, AlertCircle, ChevronRight, Zap, Menu, X } from "lucide-react"
+import { LogOut, Clock, Target, TrendingUp, AlertCircle, Zap, Menu, X } from "lucide-react"
 
-// Mock user data
-const userTaskData = [
-  { name: "Development", value: 60, hours: 24 },
-  { name: "Meetings", value: 20, hours: 8 },
-  { name: "Code Review", value: 15, hours: 6 },
-  { name: "Other", value: 5, hours: 2 },
-]
+const COLORS = ["#f16a21", "#2d307a", "#979897", "#f79021", "#10B981"]
 
-const weeklyTimeData = [
-  { day: "Mon", logged: 8.2, target: 8, estimated: 8 },
-  { day: "Tue", logged: 7.8, target: 8, estimated: 8 },
-  { day: "Wed", logged: 8.5, target: 8, estimated: 8 },
-  { day: "Thu", logged: 7.9, target: 8, estimated: 8 },
-  { day: "Fri", logged: 8.1, target: 8, estimated: 8 },
-]
-
-const userTasks = [
-  { id: 1, name: "Fix login authentication", project: "Alpha", estimated: 4, logged: 3.5, status: "In Progress" },
-  { id: 2, name: "Update database schema", project: "Beta", estimated: 6, logged: 5.2, status: "In Progress" },
-  { id: 3, name: "Code review PR #234", project: "Gamma", estimated: 2, logged: 1.8, status: "Completed" },
-  { id: 4, name: "Design new dashboard layout", project: "Alpha", estimated: 5, logged: 0, status: "Not Started" },
-]
-
-const COLORS = ["#f16a21", "#2d307a", "#979897", "#f79021"]
-
-const timeReconciliation = {
-  asana: { hours: 62, color: "#f16a21", team: "Project Management" },
-  ivanti: { hours: 45, color: "#2d307a", team: "IT Support" },
-  timeTracker: { hours: 63, color: "#979897", team: "Time Logging" },
-}
-
-const calculateTotal = () => {
-  return timeReconciliation.asana.hours + timeReconciliation.ivanti.hours + timeReconciliation.timeTracker.hours
-}
-
-const calculateAverage = () => {
-  return (calculateTotal() / 3).toFixed(1)
-}
-
-const getVariance = (value: number) => {
-  const avg = Number.parseFloat(calculateAverage())
-  return (value - avg).toFixed(1)
-}
-
-const getVarianceStatus = (variance: number) => {
-  const absVariance = Math.abs(variance)
-  if (absVariance > 10) return { label: "Critical", bg: "bg-red-50", text: "text-red-700", border: "border-red-200" }
-  if (absVariance > 5)
-    return { label: "Warning", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" }
-  return { label: "Good", bg: "bg-green-50", text: "text-green-700", border: "border-green-200" }
-}
-
-// Mock project data with platform-specific user contributions
-const projects = [
-  {
-    id: 1,
-    name: "Mobile App Redesign",
-    platforms: {
-      asana: {
-        estimated: 62,
-        users: [
-          { name: "John Doe", logged: 20, estimated: 22 },
-          { name: "Sarah Smith", logged: 18, estimated: 20 },
-          { name: "Mike Johnson", logged: 24, estimated: 20 },
-        ],
-      },
-      ivanti: {
-        estimated: 80,
-        users: [
-          { name: "Emma Wilson", logged: 15, estimated: 20 },
-          { name: "David Brown", logged: 18, estimated: 22 },
-          { name: "Lisa Anderson", logged: 12, estimated: 18 },
-        ],
-      },
-      timeTracker: {
-        estimated: 100,
-        users: [
-          { name: "John Doe", logged: 21, estimated: 25 },
-          { name: "Sarah Smith", logged: 19, estimated: 20 },
-          { name: "Emma Wilson", logged: 16, estimated: 22 },
-          { name: "Mike Johnson", logged: 25, estimated: 22 },
-          { name: "David Brown", logged: 20, estimated: 22 },
-        ],
-      },
-      innovation: {
-        estimated: 120,
-        users: [
-          { name: "Alice Chen", logged: 40, estimated: 50 },
-          { name: "Robert Taylor", logged: 35, estimated: 40 },
-          { name: "James Miller", logged: 42, estimated: 50 },
-        ],
-      },
-    },
-  },
-  {
-    id: 2,
-    name: "API Integration Phase",
-    platforms: {
-      asana: {
-        estimated: 45,
-        users: [
-          { name: "John Doe", logged: 18, estimated: 15 },
-          { name: "Sarah Smith", logged: 15, estimated: 15 },
-          { name: "Mike Johnson", logged: 12, estimated: 15 },
-        ],
-      },
-      ivanti: {
-        estimated: 60,
-        users: [
-          { name: "Emma Wilson", logged: 22, estimated: 20 },
-          { name: "David Brown", logged: 20, estimated: 20 },
-          { name: "Lisa Anderson", logged: 18, estimated: 20 },
-        ],
-      },
-      timeTracker: {
-        estimated: 75,
-        users: [
-          { name: "John Doe", logged: 16, estimated: 15 },
-          { name: "Sarah Smith", logged: 14, estimated: 15 },
-          { name: "Emma Wilson", logged: 22, estimated: 20 },
-          { name: "Mike Johnson", logged: 13, estimated: 15 },
-        ],
-      },
-      innovation: {
-        estimated: 90,
-        users: [
-          { name: "Alice Chen", logged: 28, estimated: 30 },
-          { name: "Robert Taylor", logged: 32, estimated: 30 },
-          { name: "James Miller", logged: 30, estimated: 30 },
-        ],
-      },
-    },
-  },
-  {
-    id: 3,
-    name: "Database Optimization",
-    platforms: {
-      asana: {
-        estimated: 38,
-        users: [
-          { name: "John Doe", logged: 14, estimated: 13 },
-          { name: "Sarah Smith", logged: 12, estimated: 12 },
-          { name: "Mike Johnson", logged: 12, estimated: 13 },
-        ],
-      },
-      ivanti: {
-        estimated: 55,
-        users: [
-          { name: "Emma Wilson", logged: 18, estimated: 18 },
-          { name: "David Brown", logged: 20, estimated: 19 },
-          { name: "Lisa Anderson", logged: 17, estimated: 18 },
-        ],
-      },
-      timeTracker: {
-        estimated: 65,
-        users: [
-          { name: "John Doe", logged: 13, estimated: 13 },
-          { name: "Sarah Smith", logged: 11, estimated: 12 },
-          { name: "Emma Wilson", logged: 19, estimated: 18 },
-          { name: "Mike Johnson", logged: 12, estimated: 13 },
-          { name: "David Brown", logged: 10, estimated: 9 },
-        ],
-      },
-      innovation: {
-        estimated: 85,
-        users: [
-          { name: "Alice Chen", logged: 30, estimated: 28 },
-          { name: "Robert Taylor", logged: 28, estimated: 29 },
-          { name: "James Miller", logged: 27, estimated: 28 },
-        ],
-      },
-    },
-  },
-]
-
-interface PlatformUser {
-  name: string
-  logged: number
-  estimated: number
-}
-
-interface PlatformData {
-  estimated: number
-  users: PlatformUser[]
-}
-
-const PlatformCard = ({
-  title,
-  color,
-  icon,
-  data,
-  description,
+function YourTimeTrackerCard({
+  totalHours,
+  categories,
+  dateLabel,
 }: {
-  title: string
-  color: string
-  icon: React.ReactNode
-  data: PlatformData
-  description: string
-}) => {
-  const totalLogged = data.users.reduce((sum, user) => sum + user.logged, 0)
-  const variance = totalLogged - data.estimated
-  const variancePercent = ((variance / data.estimated) * 100).toFixed(1)
-
-  const getStatusColor = (variance: number) => {
-    if (variance > 15) return "text-red-600 bg-red-50 border-red-200"
-    if (variance > 5) return "text-amber-600 bg-amber-50 border-amber-200"
-    if (variance < -15) return "text-green-600 bg-green-50 border-green-200"
-    return "text-blue-600 bg-blue-50 border-blue-200"
-  }
-
+  totalHours: number
+  categories: { name: string; hours: number }[]
+  dateLabel: string
+}) {
+  const maxHours = Math.max(...categories.map((c) => c.hours), 1)
   return (
     <div className="platform-card">
       <div className="flex items-start justify-between mb-6">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <div className="flex-shrink-0">{icon}</div>
-            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-          </div>
-          <p className="text-sm text-gray-500">{description}</p>
-        </div>
-      </div>
-
-      {/* Main Stats */}
-      <div className="grid grid-cols-3 gap-4 pb-6 border-b border-gray-200 mb-6">
-        <div>
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Logged</p>
-          <p className="text-2xl font-bold mt-1" style={{ color }}>
-            {totalLogged}h
-          </p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Estimated</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{data.estimated}h</p>
-        </div>
-        <div>
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</p>
-          <p className={`text-2xl font-bold mt-1 ${variance > 0 ? "text-red-600" : "text-green-600"}`}>
-            {variance > 0 ? "+" : ""}
-            {variance}h
-          </p>
-        </div>
-      </div>
-
-      {/* Team Breakdown */}
-      <div className="space-y-4">
-        <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">Team Breakdown</p>
-        {data.users.map((user, idx) => {
-          const userVariance = user.logged - user.estimated
-          const progressPercent = (user.logged / Math.max(user.estimated, user.logged)) * 100
-          return (
-            <div key={idx} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-700">{user.name}</p>
-                <span className={`text-xs font-bold ${userVariance > 0 ? "text-red-600" : "text-green-600"}`}>
-                  {userVariance > 0 ? "+" : ""}
-                  {userVariance}h
-                </span>
-              </div>
-              <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{
-                    width: `${Math.min(progressPercent, 100)}%`,
-                    backgroundColor: color,
-                  }}
-                />
-              </div>
-              <p className="text-xs text-gray-500">
-                {user.logged}h logged / {user.estimated}h estimated
-              </p>
+            <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+              <span className="text-lg font-bold text-gray-700">T</span>
             </div>
-          )
-        })}
+            <h3 className="text-lg font-bold text-[#404040]">Time Tracker</h3>
+          </div>
+          <p className="text-sm text-gray-500">Your logged hours • {dateLabel}</p>
+        </div>
       </div>
-
-      {/* Status Badge */}
-      <div className={`mt-6 p-3 rounded-lg text-xs font-medium text-center ${getStatusColor(variance)}`}>
-        {variance > 15
-          ? "Over Budget"
-          : variance > 5
-            ? "Above Estimate"
-            : variance < -15
-              ? "Ahead of Schedule"
-              : "On Track"}
+      <div className="grid grid-cols-2 gap-4 pb-6 border-b border-gray-200 mb-6">
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Your total</p>
+          <p className="text-2xl font-bold mt-1 text-[#979897]">{totalHours.toFixed(1)}h</p>
+        </div>
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Categories</p>
+          <p className="text-2xl font-bold text-[#404040] mt-1">{categories.length}</p>
+        </div>
+      </div>
+      <div className="space-y-4">
+        <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">Your hours by category</p>
+        {categories.length === 0 ? (
+          <p className="text-sm text-gray-500 py-4">No time entries in this date range.</p>
+        ) : (
+          categories.map((cat, idx) => {
+            const pct = (cat.hours / maxHours) * 100
+            return (
+              <div key={idx} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-gray-700 truncate pr-2">{cat.name || "Uncategorized"}</p>
+                  <span className="text-xs font-bold text-gray-600 shrink-0">{cat.hours.toFixed(1)}h</span>
+                </div>
+                <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: COLORS[idx % COLORS.length] }}
+                  />
+                </div>
+              </div>
+            )
+          })
+        )}
       </div>
     </div>
   )
 }
 
+function AsanaCard({ estimatedHours, loading, dateLabel }: { estimatedHours: number | null; loading: boolean; dateLabel: string }) {
+  return (
+    <div className="platform-card">
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+              <span className="text-lg font-bold text-orange-600">A</span>
+            </div>
+            <h3 className="text-lg font-bold text-[#404040]">Asana</h3>
+          </div>
+          <p className="text-sm text-gray-500">Estimated hours only • {dateLabel}</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 pb-6 border-b border-gray-200 mb-6">
+        <div>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Total estimated</p>
+          {loading ? (
+            <p className="text-2xl font-bold mt-1 text-gray-400">Loading...</p>
+          ) : estimatedHours !== null ? (
+            <p className="text-2xl font-bold mt-1 text-[#f16a21]">{estimatedHours.toFixed(1)}h</p>
+          ) : (
+            <p className="text-2xl font-bold mt-1 text-gray-400">—</p>
+          )}
+        </div>
+      </div>
+      <div className="space-y-2">
+        <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">Source</p>
+        <p className="text-sm text-gray-600">
+          ManHours Estimate (direct) or Mandays Estimate × 8 (converted to hours)
+        </p>
+        <p className="text-xs text-gray-500 mt-2">
+          Calculated from all Asana projects with custom field estimates
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function PlatformVariancePlaceholder({ title, color, icon, description }: { title: string; color: string; icon: string; description: string }) {
+  return (
+    <div className="platform-card opacity-90 border border-dashed border-gray-300 bg-gray-50/50">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gray-200">
+          <span className="text-lg font-bold" style={{ color }}>{icon}</span>
+        </div>
+        <h3 className="text-lg font-bold text-[#404040]">{title}</h3>
+      </div>
+      <p className="text-sm text-gray-500 mb-4">{description}</p>
+      <p className="text-sm text-gray-400 italic">Connect to see your variance</p>
+    </div>
+  )
+}
+
+interface Timelog {
+  row_id: string
+  date: string
+  starttime: string
+  endtime: string
+  calculated_hours: number
+  category_id: number | null
+  category_name: string | null
+  project_name: string
+  asana_project_gid: string
+  user_name: string
+  user_email: string
+}
+
+interface TimelogGroup {
+  date: string
+  logs: Timelog[]
+  total_hours: number
+}
+
+function defaultDateRange() {
+  const end = new Date()
+  const start = new Date()
+  start.setDate(start.getDate() - 30)
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  }
+}
+
 export default function UserDashboard() {
   const router = useRouter()
   const [userEmail, setUserEmail] = useState<string | null>(null)
-  const [todayLogged, setTodayLogged] = useState(7.5)
-  const [selectedProjectId, setSelectedProjectId] = useState(1) // Add project selector state
+  const [userName, setUserName] = useState<string | null>(null)
+  const [todayLogged, setTodayLogged] = useState(0)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [timelogs, setTimelogs] = useState<Timelog[]>([])
+  const [groupedTimelogs, setGroupedTimelogs] = useState<TimelogGroup[]>([])
+  const [timelogSummary, setTimelogSummary] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [dateRange, setDateRange] = useState(defaultDateRange)
+  const [asanaEstimatedHours, setAsanaEstimatedHours] = useState<number | null>(null)
+  const [asanaLoading, setAsanaLoading] = useState(false)
 
   useEffect(() => {
-    // Check if user is authenticated
     const session = localStorage.getItem("userSession")
     if (!session) {
       router.push("/auth/login")
       return
     }
-
     const userData = JSON.parse(session)
     setUserEmail(userData.email)
+    setUserName(userData.name ?? userData.email?.split("@")[0] ?? null)
+    fetchUserTimelogs(userData.email, dateRange.startDate, dateRange.endDate)
+    fetchAsanaEstimatedHours()
   }, [router])
+
+  const fetchAsanaEstimatedHours = async () => {
+    try {
+      setAsanaLoading(true)
+      const response = await fetch('/api/asana/projects')
+      const data = await response.json()
+      
+      if (data.success && data.projects) {
+        // Sum all estimated hours from all projects
+        const totalEstimated = data.projects.reduce((sum: number, project: any) => {
+          return sum + (project.estimated_hours || 0)
+        }, 0)
+        setAsanaEstimatedHours(Math.round(totalEstimated * 100) / 100)
+      } else {
+        setAsanaEstimatedHours(null)
+      }
+    } catch (error) {
+      console.error('Error fetching Asana estimated hours:', error)
+      setAsanaEstimatedHours(null)
+    } finally {
+      setAsanaLoading(false)
+    }
+  }
+
+  const applyDateRange = (start: string, end: string) => {
+    setDateRange({ startDate: start, endDate: end })
+    if (userEmail) {
+      setLoading(true)
+      fetchUserTimelogs(userEmail, start, end).finally(() => setLoading(false))
+    }
+  }
+
+  const fetchUserTimelogs = async (email: string, startDate?: string, endDate?: string) => {
+    try {
+      setLoading(true)
+      let url = `/api/db/timelogs/user?email=${encodeURIComponent(email)}`
+      if (startDate && endDate) {
+        url += `&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+      }
+      const response = await fetch(url)
+      const data = await response.json()
+
+      if (data.success) {
+        setTimelogs(data.timelogs)
+        setGroupedTimelogs(data.grouped_by_date)
+        setTimelogSummary(data.summary)
+        const today = new Date().toISOString().split("T")[0]
+        const todayLogs = (data.timelogs || []).filter((log: Timelog) => log.date === today)
+        const todayTotal = todayLogs.reduce((sum: number, log: Timelog) => sum + log.calculated_hours, 0)
+        setTodayLogged(Math.round(todayTotal * 100) / 100)
+      } else {
+        console.error("Failed to fetch timelogs:", data.error)
+      }
+    } catch (error) {
+      console.error("Error fetching user timelogs:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem("userSession")
@@ -357,15 +282,44 @@ export default function UserDashboard() {
     }
   }, [isMenuOpen])
 
-  if (!userEmail) {
+  if (!userEmail || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your timelogs...</p>
+        </div>
       </div>
     )
   }
 
-  const selectedProject = projects.find((p) => p.id === selectedProjectId) || projects[0]
+  const weeklyFromUserLogs = (() => {
+    const dayOrder = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    const map: Record<string, number> = {}
+    dayOrder.forEach((d) => (map[d] = 0))
+    groupedTimelogs.forEach((g) => {
+      const d = new Date(g.date + "T00:00:00")
+      const day = dayOrder[d.getDay()]
+      map[day] = (map[day] || 0) + g.total_hours
+    })
+    return dayOrder.map((day) => ({ day, logged: Math.round(map[day] * 100) / 100 }))
+  })()
+
+  const yourActivityHours = (() => {
+    const map: Record<string, number> = {}
+    timelogs.forEach((log) => {
+      const name = log.category_name || "Uncategorized"
+      map[name] = (map[name] || 0) + (log.calculated_hours || 0)
+    })
+    return Object.entries(map)
+      .map(([name, hours]) => ({ name, hours: Math.round(hours * 100) / 100 }))
+      .sort((a, b) => b.hours - a.hours)
+  })()
+
+  const yourCategoriesCount = yourActivityHours.length
+  const yourTotalInRange = timelogSummary?.total_hours ?? 0
+  const dateLabel = `${dateRange.startDate} → ${dateRange.endDate}`
+  const welcomeName = userName || userEmail?.split("@")[0] || "there"
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
@@ -374,40 +328,26 @@ export default function UserDashboard() {
           <div className="h-16 flex items-center justify-between text-white">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md ring-2 ring-white/20 group-hover:ring-white/40 transition-all duration-200 group-hover:scale-105">
-                <img src="/SERVICEITLOGO.png" alt="Service IT+ logo" className="w-8 h-8 object-contain" />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-lg font-bold tracking-tight leading-tight">My Dashboard</h1>
-                <p className="text-[10px] text-orange-100 font-medium tracking-wide">Personal View</p>
+                <img src="/Service IT Logo Remake.avif" alt="Service IT+ logo" className="w-8 h-8 object-contain" />
               </div>
             </Link>
             <div className="flex items-center gap-3 sm:gap-4" data-header-menu-root="true">
               <div className="text-sm text-right hidden lg:block">
                 <p className="text-orange-100 text-xs font-medium">Signed in as</p>
-                <p className="font-semibold text-white">{userEmail}</p>
+                <p className="font-semibold text-white">{userName || userEmail}</p>
               </div>
               <div className="flex items-center gap-2 relative">
-                {/* Desktop nav (avoid crowding at md widths) */}
+                {/* Navigation */}
                 <Button asChild variant="ghost" className="hidden lg:inline-flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
-                  <Link href="/dashboard">Org Dashboard</Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="ghost"
-                  className="hidden lg:inline-flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium"
-                >
-                  <Link href="/dashboard/reports">Reports</Link>
-                </Button>
-                <Button asChild variant="ghost" className="hidden lg:inline-flex h-9 px-4 text-white hover:bg-white/10 border-0 font-medium">
-                  <Link href="/dashboard/tasks">Tasks</Link>
+                  <Link href="/dashboard/variance">Variance</Link>
                 </Button>
 
-                {/* Mid-size menu (md < lg) */}
+                {/* Navigation menu removed for security */}
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="hidden md:inline-flex lg:hidden text-white hover:bg-white/10"
+                  className="hidden text-white hover:bg-white/10"
                   aria-label={isMenuOpen ? "Close menu" : "Open menu"}
                   aria-expanded={isMenuOpen}
                   onClick={() => setIsMenuOpen((v) => !v)}
@@ -416,36 +356,13 @@ export default function UserDashboard() {
                 </Button>
 
                 {isMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-64 rounded-xl bg-white text-gray-900 shadow-xl ring-1 ring-black/10 overflow-hidden lg:hidden">
+                  <div className="absolute right-0 top-full mt-2 w-64 rounded-xl bg-white text-[#404040] shadow-xl ring-1 ring-black/10 overflow-hidden lg:hidden">
                     <div className="px-4 py-3 border-b border-gray-100">
                       <p className="text-xs text-gray-500 font-medium">Signed in as</p>
-                      <p className="text-sm font-semibold truncate">{userEmail}</p>
+                      <p className="text-sm font-semibold truncate">{userName || userEmail}</p>
                     </div>
                     <div className="p-2">
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className="w-full justify-start h-10 px-3 text-gray-800 hover:bg-gray-50"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <Link href="/dashboard">Org Dashboard</Link>
-                      </Button>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className="w-full justify-start h-10 px-3 text-gray-800 hover:bg-gray-50"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <Link href="/dashboard/reports">Reports</Link>
-                      </Button>
-                      <Button
-                        asChild
-                        variant="ghost"
-                        className="w-full justify-start h-10 px-3 text-gray-800 hover:bg-gray-50"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <Link href="/dashboard/tasks">Tasks</Link>
-                      </Button>
+                      {/* Navigation links removed for security */}
                     </div>
                   </div>
                 )}
@@ -466,8 +383,8 @@ export default function UserDashboard() {
         <div className="mb-10">
           <div className="flex items-baseline justify-between mb-3">
             <div>
-              <h2 className="text-4xl font-bold text-gray-900">Welcome back!</h2>
-              <p className="text-gray-600 mt-2">Here's your personalized dashboard and time reconciliation</p>
+              <h2 className="text-4xl font-bold text-[#404040]">Welcome back, {welcomeName}!</h2>
+              <p className="text-gray-600 mt-2">Your personal dashboard • Time Tracker, Asana &amp; Ivanti variance</p>
             </div>
           </div>
         </div>
@@ -480,9 +397,9 @@ export default function UserDashboard() {
               </div>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-900 mb-1">Time Tracking Reminder</p>
+              <p className="text-sm font-semibold text-amber-900 mb-1">Your time tracking reminder</p>
               <p className="text-sm text-amber-700">
-                You've logged <span className="font-bold">{todayLogged}h</span> today. Target is <span className="font-bold">8 hours</span>.
+                You&apos;ve logged <span className="font-bold">{todayLogged}h</span> today. Your target is <span className="font-bold">8 hours</span>.
               </p>
             </div>
           </div>
@@ -491,267 +408,296 @@ export default function UserDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           <div className="stat-card">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-gray-600">Today's Logged</p>
+              <p className="text-sm font-medium text-gray-600">Your today</p>
               <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
                 <Clock className="w-5 h-5 text-orange-600" />
               </div>
             </div>
             <p className="text-3xl font-bold text-orange-600">{todayLogged}h</p>
-            <p className="text-xs text-gray-500 mt-2">Of 8-hour target</p>
+            <p className="text-xs text-gray-500 mt-2">Of your 8h target</p>
           </div>
 
           <div className="stat-card">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-gray-600">Weekly Progress</p>
+              <p className="text-sm font-medium text-gray-600">Your total hours</p>
               <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                 <Target className="w-5 h-5 text-blue-600" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-blue-600">40.5h</p>
-            <p className="text-xs text-gray-500 mt-2">Of 40-hour target</p>
+            <p className="text-3xl font-bold text-blue-600">{timelogSummary?.total_hours ?? 0}h</p>
+            <p className="text-xs text-gray-500 mt-2">In selected range</p>
           </div>
 
           <div className="stat-card">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-gray-600">Active Tasks</p>
+              <p className="text-sm font-medium text-gray-600">Your entries</p>
               <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
                 <Zap className="w-5 h-5 text-green-600" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-green-600">2</p>
-            <p className="text-xs text-gray-500 mt-2">In progress</p>
+            <p className="text-3xl font-bold text-green-600">{timelogSummary?.total_entries ?? 0}</p>
+            <p className="text-xs text-gray-500 mt-2">Time entries</p>
           </div>
 
           <div className="stat-card">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-gray-600">Completion</p>
+              <p className="text-sm font-medium text-gray-600">Your categories</p>
               <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-purple-600" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-purple-600">75%</p>
-            <p className="text-xs text-gray-500 mt-2">This week</p>
+            <p className="text-3xl font-bold text-purple-600">{yourCategoriesCount}</p>
+            <p className="text-xs text-gray-500 mt-2">In selected range</p>
           </div>
         </div>
 
-        {/* Time Entry Reconciliation Section */}
+        {/* Platform variance — your Time Tracker + Asana / Ivanti placeholders */}
         <div className="mb-12">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-8">
             <div>
-              <h3 className="text-2xl font-bold text-gray-900">Time Entry Reconciliation</h3>
-              <p className="text-gray-600 mt-2">Compare hours logged across all platforms to identify discrepancies</p>
+              <h3 className="text-2xl font-bold text-[#404040]">Your platform variance</h3>
+              <p className="text-gray-600 mt-2">Time Tracker (your data) vs Asana &amp; Ivanti • {dateLabel}</p>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700">Select Project</label>
-              <select
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(Number(e.target.value))}
-                className="px-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 font-medium hover:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-              >
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
+              <label className="text-sm font-semibold text-gray-700">Date range</label>
+              <div className="flex gap-2 items-center flex-wrap">
+                <input
+                  type="date"
+                  value={dateRange.startDate}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    if (v && dateRange.endDate && v <= dateRange.endDate)
+                      setDateRange((r) => ({ ...r, startDate: v }))
+                  }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-[#404040] text-sm font-medium"
+                />
+                <span className="text-gray-500">→</span>
+                <input
+                  type="date"
+                  value={dateRange.endDate}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    if (v && dateRange.startDate && dateRange.startDate <= v)
+                      setDateRange((r) => ({ ...r, endDate: v }))
+                  }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-[#404040] text-sm font-medium"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => applyDateRange(dateRange.startDate, dateRange.endDate)}
+                  className="bg-[#f16a21] hover:bg-[#f79021] text-white"
+                >
+                  Apply
+                </Button>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Asana */}
-            <PlatformCard
-              title="Asana"
-              color="#f16a21"
-              icon={
-                <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                  <span className="text-lg font-bold text-orange-600">A</span>
-                </div>
-              }
-              data={selectedProject.platforms.asana}
-              description="Project Management"
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <YourTimeTrackerCard
+              totalHours={yourTotalInRange}
+              categories={yourActivityHours}
+              dateLabel={dateLabel}
             />
-
-            {/* Ivanti */}
-            <PlatformCard
+            <AsanaCard
+              estimatedHours={asanaEstimatedHours}
+              loading={asanaLoading}
+              dateLabel={dateLabel}
+            />
+            <PlatformVariancePlaceholder
               title="Ivanti"
               color="#2d307a"
-              icon={
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <span className="text-lg font-bold text-blue-600">I</span>
-                </div>
-              }
-              data={selectedProject.platforms.ivanti}
-              description="IT Support System"
-            />
-
-            {/* Time Tracker */}
-            <PlatformCard
-              title="Time Tracker"
-              color="#979897"
-              icon={
-                <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
-                  <span className="text-lg font-bold text-gray-700">T</span>
-                </div>
-              }
-              data={selectedProject.platforms.timeTracker}
-              description="Internal Logging"
-            />
-
-            {/* Innovation */}
-            <PlatformCard
-              title="Innovation"
-              color="#10B981"
-              icon={
-                <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <span className="text-lg font-bold text-emerald-600">N</span>
-                </div>
-              }
-              data={selectedProject.platforms.innovation}
-              description="Innovation Projects"
+              icon="I"
+              description="IT support • estimated vs actual"
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Summary Card */}
-            <div className="premium-card p-6">
-              <h4 className="text-lg font-bold text-gray-900 mb-6">Summary Overview</h4>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">Combined Total</span>
-                  <span className="text-2xl font-bold text-gray-900">{calculateTotal()}h</span>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">Average per Platform</span>
-                  <span className="text-2xl font-bold text-orange-600">{calculateAverage()}h</span>
-                </div>
+          <div className="premium-card p-6">
+            <h4 className="text-lg font-bold text-[#404040] mb-6">Your summary</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <span className="text-sm font-medium text-gray-700">Your logged (Time Tracker)</span>
+                <span className="text-2xl font-bold text-[#404040]">{Number(yourTotalInRange).toFixed(1)}h</span>
               </div>
-            </div>
-
-            {/* Action Card */}
-            <div className="premium-card p-6 bg-gradient-to-br from-orange-50 to-orange-50 border-orange-200">
-              <h4 className="text-lg font-bold text-orange-900 mb-4">Action Required</h4>
-              <div className="space-y-3 mb-6">
-                <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-orange-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-white text-xs font-bold">!</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-orange-900">Ivanti Under-logged</p>
-                    <p className="text-xs text-orange-700 mt-1">
-                      IT Support is {Math.abs(Number(getVariance(timeReconciliation.ivanti.hours)))}h below average
-                    </p>
-                  </div>
-                </div>
+              <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
+                <span className="text-sm font-medium text-gray-700">Asana estimated</span>
+                <span className="text-2xl font-bold text-orange-600">
+                  {asanaEstimatedHours !== null ? `${asanaEstimatedHours.toFixed(1)}h` : '—'}
+                </span>
               </div>
-              <Button className="w-full bg-[#f16a21] hover:bg-[#f79021] text-white rounded-lg">
-                Review Discrepancies
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </Button>
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                <span className="text-sm font-medium text-gray-700">Your entries</span>
+                <span className="text-2xl font-bold text-blue-600">{timelogSummary?.total_entries ?? 0}</span>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Task Distribution */}
+          {/* Your task distribution — your categories only */}
           <div className="premium-card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Task Distribution</h3>
-            <p className="text-sm text-gray-600 mb-6">Breakdown of your tasks by category</p>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={userTaskData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(entry) => `${entry.name}: ${entry.value}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {userTaskData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <h3 className="text-lg font-bold text-[#404040] mb-2">Your task distribution</h3>
+            <p className="text-sm text-gray-600 mb-6">Your hours by category • {dateLabel}</p>
+            {yourActivityHours.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">No category data in this range.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={yourActivityHours.map((c) => ({ name: c.name, value: c.hours }))}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={(entry) => `${entry.name}: ${entry.value}h`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {yourActivityHours.map((_, i) => (
+                      <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => `${v}h`} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
 
-          {/* Weekly Time Trend */}
+          {/* Your weekly trend */}
           <div className="premium-card p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Weekly Time Tracking</h3>
-            <p className="text-sm text-gray-600 mb-6">Your logged hours vs target</p>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={weeklyTimeData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="day" tick={{ fill: "#6b7280", fontSize: 12 }} />
-                <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="logged" stroke="#f16a21" strokeWidth={2} name="Logged Hours" />
-                <Line type="monotone" dataKey="target" stroke="#2d307a" strokeWidth={2} name="Target Hours" />
-              </LineChart>
-            </ResponsiveContainer>
+            <h3 className="text-lg font-bold text-[#404040] mb-2">Your weekly pattern</h3>
+            <p className="text-sm text-gray-600 mb-6">Your logged hours by day of week • {dateLabel}</p>
+            {weeklyFromUserLogs.every((d) => d.logged === 0) ? (
+              <p className="text-center text-gray-500 py-8">No time logged in this range.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={weeklyFromUserLogs} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="day" tick={{ fill: "#6b7280", fontSize: 12 }} />
+                  <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} />
+                  <Tooltip formatter={(v: number) => [`${Number(v).toFixed(1)}h`, "Logged"]} />
+                  <Legend />
+                  <Line type="monotone" dataKey="logged" stroke="#f16a21" strokeWidth={2} name="Logged Hours" />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
+        {/* Your Time Logs */}
         <div className="premium-card p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-2">Your Active Tasks</h3>
-          <p className="text-sm text-gray-600 mb-6">Tasks assigned to you from all integrated platforms</p>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left font-semibold text-gray-700 py-4 px-4">Task Name</th>
-                  <th className="text-left font-semibold text-gray-700 py-4 px-4">Project</th>
-                  <th className="text-center font-semibold text-gray-700 py-4 px-4">Estimated</th>
-                  <th className="text-center font-semibold text-gray-700 py-4 px-4">Logged</th>
-                  <th className="text-center font-semibold text-gray-700 py-4 px-4">Variance</th>
-                  <th className="text-center font-semibold text-gray-700 py-4 px-4">Status</th>
-                  <th className="text-center font-semibold text-gray-700 py-4 px-4">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {userTasks.map((task) => {
-                  const variance = task.estimated - task.logged
-                  const isOverdue = variance < 0
-                  return (
-                    <tr key={task.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                      <td className="py-4 px-4 font-medium text-gray-900">{task.name}</td>
-                      <td className="py-4 px-4 text-gray-600">{task.project}</td>
-                      <td className="py-4 px-4 text-center text-gray-600">{task.estimated}h</td>
-                      <td className="py-4 px-4 text-center font-medium text-gray-900">{task.logged}h</td>
-                      <td
-                        className={`py-4 px-4 text-center font-medium ${isOverdue ? "text-red-600" : "text-green-600"}`}
-                      >
-                        {variance > 0 ? `+${variance}h` : `${variance}h`}
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            task.status === "Completed"
-                              ? "bg-green-100 text-green-700"
-                              : task.status === "In Progress"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {task.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-center">
-                        <Link href={`/dashboard/time-tracker/${task.id}`}>
-                          <Button size="sm" className="bg-[#f16a21] hover:bg-[#f79021] text-white rounded">
-                            Log Time
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-[#404040] mb-2">Your time logs</h3>
+              <p className="text-sm text-gray-600">Your entries from Time Tracker • {dateLabel}</p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <input
+                type="date"
+                value={dateRange.startDate}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v && dateRange.endDate && v <= dateRange.endDate) setDateRange((r) => ({ ...r, startDate: v }))
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+              />
+              <span className="text-gray-400">→</span>
+              <input
+                type="date"
+                value={dateRange.endDate}
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v && dateRange.startDate && dateRange.startDate <= v) setDateRange((r) => ({ ...r, endDate: v }))
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm"
+              />
+              <Button
+                size="sm"
+                onClick={() => applyDateRange(dateRange.startDate, dateRange.endDate)}
+                className="border-orange-300 text-orange-600 hover:bg-orange-50"
+              >
+                Apply
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setLoading(true)
+                  fetchUserTimelogs(userEmail!, dateRange.startDate, dateRange.endDate).finally(() => setLoading(false))
+                }}
+                className="border-orange-300 text-orange-600 hover:bg-orange-50"
+              >
+                🔄 Refresh
+              </Button>
+            </div>
           </div>
+
+          {timelogs.length === 0 ? (
+            <div className="text-center py-12">
+              <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 font-medium">No time logs in this range</p>
+              <p className="text-sm text-gray-400 mt-1">Your entries will appear here when you log time</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {groupedTimelogs.map((group) => (
+                <div key={group.date} className="border border-gray-200 rounded-xl overflow-hidden">
+                  <div className="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-3 flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-[#404040]">
+                        {new Date(group.date + 'T00:00:00').toLocaleDateString('en-US', { 
+                          weekday: 'long', 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </h4>
+                      <p className="text-xs text-gray-600 mt-0.5">{group.logs.length} entries</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-600 uppercase font-semibold">Total</p>
+                      <p className="text-xl font-bold text-orange-600">{group.total_hours.toFixed(2)}h</p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="text-left font-semibold text-gray-700 py-3 px-6">Category</th>
+                          <th className="text-left font-semibold text-gray-700 py-3 px-4">Start</th>
+                          <th className="text-left font-semibold text-gray-700 py-3 px-4">End</th>
+                          <th className="text-center font-semibold text-gray-700 py-3 px-4">Hours</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {group.logs.map((log) => (
+                          <tr key={log.row_id} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                            <td className="py-4 px-6">
+                              {log.category_name ? (
+                                <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                                  {log.category_name}
+                                </span>
+                              ) : (
+                                <span className="italic text-gray-400 text-sm">No category</span>
+                              )}
+                            </td>
+                            <td className="py-4 px-4 text-gray-700 font-mono text-xs">{log.starttime}</td>
+                            <td className="py-4 px-4 text-gray-700 font-mono text-xs">{log.endtime}</td>
+                            <td className="py-4 px-4 text-center">
+                              <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full font-semibold">
+                                {log.calculated_hours.toFixed(2)}h
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
@@ -764,7 +710,7 @@ export default function UserDashboard() {
                 <img src="/SERVICEITLOGO.png" alt="Service IT+ logo" className="w-8 h-8 object-contain" />
               </div>
               <div className="space-y-0.5">
-                <p className="text-sm font-semibold tracking-wide text-gray-900">
+                <p className="text-sm font-semibold tracking-wide text-[#404040]">
                   Service IT+
                 </p>
                 <p className="text-xs text-gray-500">
@@ -774,15 +720,15 @@ export default function UserDashboard() {
             </div>
 
             <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-gray-600">
-              <Link href="/dashboard/reports" className="hover:text-gray-900 transition-colors">
+              <Link href="/dashboard/reports" className="hover:text-[#404040] transition-colors">
                 Reports
               </Link>
               <span className="hidden sm:inline-block h-1 w-1 rounded-full bg-gray-300" />
-              <Link href="/dashboard/tasks" className="hover:text-gray-900 transition-colors">
+              <Link href="/dashboard/tasks" className="hover:text-[#404040] transition-colors">
                 Tasks
               </Link>
               <span className="hidden sm:inline-block h-1 w-1 rounded-full bg-gray-300" />
-              <Link href="/" className="hover:text-gray-900 transition-colors">
+              <Link href="/" className="hover:text-[#404040] transition-colors">
                 Home
               </Link>
             </div>

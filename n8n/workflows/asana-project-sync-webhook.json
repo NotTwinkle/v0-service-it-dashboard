@@ -1,0 +1,229 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "c8d79e56-2b29-4792-a4ae-b222c18cf3cd",
+      "name": "Schedule Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1uYHGyAi0a2GriocwAl3FD3OI3w4pUqXqGNLLKrwq-w4"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 379667821,
+          "mode": "list",
+          "cachedResultName": "Project",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uYHGyAi0a2GriocwAl3FD3OI3w4pUqXqGNLLKrwq-w4/edit#gid=379667821"
+        },
+        "options": {}
+      },
+      "id": "9b97dd19-aab4-4c98-bf98-cb078d714a2b",
+      "name": "Read Google Sheet Project List",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        64,
+        -128
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nN7Zh4cTWuNR32rk",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "split-in-batches",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        288,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "project",
+        "id": "={{ $json['Project ID'] || $json[0] || $json.A }}"
+      },
+      "id": "d79059eb-2f76-44bc-be97-057defa8c824",
+      "name": "Get Asana Project Details",
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        512,
+        -128
+      ],
+      "credentials": {
+        "asanaApi": {
+          "id": "JzET8o99RhH9GjJV",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "filters": {
+          "project": "={{ $json.gid }}"
+        }
+      },
+      "id": "9e8c351e-e297-43ff-bc92-c520fe30d07c",
+      "name": "Get Project Tasks",
+      "type": "n8n-nodes-base.asana",
+      "typeVersion": 1,
+      "position": [
+        736,
+        -128
+      ],
+      "credentials": {
+        "asanaApi": {
+          "id": "JzET8o99RhH9GjJV",
+          "name": "Asana account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate estimated hours from Asana custom fields\n// This runs once per project (due to Loop Over Items with batch size 1)\nconst tasks = $input.all();\n\n// Get project info from the Asana project details node\nconst projectNode = $('Get Asana Project Details');\nconst currentProject = projectNode.first().json;\n\nconst projectGid = currentProject.gid;\nconst projectName = currentProject.name;\n\nlet totalEstimated = 0;\nlet completedTasks = 0;\n\ntasks.forEach(task => {\n  const t = task.json;\n  \n  if (t.completed) completedTasks++;\n  \n  // Look for estimated hours in custom fields\n  if (t.custom_fields && Array.isArray(t.custom_fields)) {\n    const hoursField = t.custom_fields.find(f => \n      f.name && (f.name.toLowerCase().includes('hour') || f.name.toLowerCase().includes('estimate'))\n    );\n    \n    if (hoursField && hoursField.number_value) {\n      totalEstimated += parseFloat(hoursField.number_value);\n    } else {\n      totalEstimated += 4; // Default 4 hours per task\n    }\n  } else {\n    totalEstimated += 4;\n  }\n});\n\nreturn [{\n  json: {\n    asana_project_gid: projectGid,\n    asana_project_name: projectName,\n    estimated_hours: totalEstimated,\n    total_tasks: tasks.length,\n    completed_tasks: completedTasks\n  }\n}];"
+      },
+      "id": "1e857743-b7b0-4e78-8860-e516fa50109b",
+      "name": "Calculate Estimated Hours",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/webhooks/asana-sync",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "2b0e7297-5914-4e98-8b00-c7edea951525",
+      "name": "Send to Dashboard API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1184,
+        -128
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Read Google Sheet Project List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Google Sheet Project List": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Get Asana Project Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Asana Project Details": {
+      "main": [
+        [
+          {
+            "node": "Get Project Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Project Tasks": {
+      "main": [
+        [
+          {
+            "node": "Calculate Estimated Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Estimated Hours": {
+      "main": [
+        [
+          {
+            "node": "Send to Dashboard API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Dashboard API": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d01a6a8c11890acdbdc9cdddc68985eaa48ca0323d040fb817e6a87a3e72b287"
+  }
+}

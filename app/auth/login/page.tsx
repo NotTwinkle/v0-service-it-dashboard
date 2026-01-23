@@ -23,22 +23,50 @@ export default function LoginPage() {
     setError("")
     setIsLoading(true)
 
-    // Simulate authentication - in production, call API
-    if (email && password) {
-      setTimeout(() => {
+    if (!email || !password) {
+      setError("Please enter email and password")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      // Call the database authentication API
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const result = await response.json()
+
+      if (result.success && result.user) {
         // Store user session
         localStorage.setItem(
           "userSession",
           JSON.stringify({
-            email,
+            ...result.user,
+            email: result.user.email || email,
             authenticated: true,
-            userId: Math.random().toString(36).substr(2, 9),
           }),
         )
-        router.push("/dashboard")
-      }, 500)
-    } else {
-      setError("Please enter email and password")
+        router.push("/dashboard/my")
+      } else {
+        // Show more detailed error
+        const errorMsg = result.error || "Invalid email or password"
+        console.error("Login failed:", result)
+        setError(errorMsg)
+        
+        // If it's a server error, suggest checking debug endpoint
+        if (response.status === 500) {
+          setError(errorMsg + " (Check server logs for details)")
+        }
+      }
+    } catch (error: any) {
+      console.error("Login error:", error)
+      setError("Failed to connect to server. Please try again.")
+    } finally {
       setIsLoading(false)
     }
   }
@@ -60,10 +88,7 @@ export default function LoginPage() {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between text-white">
           <Link href="/" onClick={handleLogoClick} className="flex items-center gap-3 group">
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md ring-2 ring-white/20 group-hover:ring-white/40 transition-all duration-200 group-hover:scale-105">
-              <img src="/SERVICEITLOGO.png" alt="Service IT+ logo" className="w-8 h-8 object-contain" />
-            </div>
-            <div className="hidden sm:block">
-              <span className="text-lg font-bold tracking-tight">Service IT+</span>
+              <img src="/Service IT Logo Remake.avif" alt="Service IT+ logo" className="w-8 h-8 object-contain" />
             </div>
           </Link>
           <Link href="/">
@@ -82,7 +107,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Welcome Section */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-[#404040] mb-2">
               Welcome Back
             </h1>
             <p className="text-gray-600">
@@ -102,7 +127,7 @@ export default function LoginPage() {
                 )}
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-900">
+                  <label className="block text-sm font-semibold text-[#404040]">
                     Email Address
                   </label>
                   <div className="relative">
@@ -118,7 +143,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-900">
+                  <label className="block text-sm font-semibold text-[#404040]">
                     Password
                   </label>
                   <div className="relative">
@@ -139,7 +164,7 @@ export default function LoginPage() {
                       type="checkbox"
                       className="w-4 h-4 rounded border-gray-300 text-[#f16a21] focus:ring-[#f16a21] focus:ring-offset-0 cursor-pointer"
                     />
-                    <span className="text-gray-600 group-hover:text-gray-900 transition-colors">
+                    <span className="text-gray-600 group-hover:text-[#404040] transition-colors">
                       Remember me
                     </span>
                   </label>
@@ -170,17 +195,6 @@ export default function LoginPage() {
                 </Button>
               </form>
 
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <p className="text-sm text-gray-600 text-center">
-                  Don't have an account?{" "}
-                  <Link
-                    href="/auth/signup"
-                    className="font-semibold text-[#f16a21] hover:text-[#f79021] transition-colors"
-                  >
-                    Sign up
-                  </Link>
-                </p>
-              </div>
 
               {/* Demo Credentials */}
               <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200/50">
