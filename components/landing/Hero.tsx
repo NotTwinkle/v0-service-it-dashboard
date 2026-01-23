@@ -6,6 +6,7 @@ import { MagneticButton } from "./MagneticButton";
 import { AnimatedCounter } from "./AnimatedCounter";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 /**
  * Hero Section - Performance Optimized
@@ -20,6 +21,7 @@ import { useRef, useState } from "react";
 
 export const Hero = () => {
     const prefersReducedMotion = useReducedMotion();
+    const router = useRouter();
     const dashboardRef = useRef<HTMLDivElement>(null);
     const [isHoveringDashboard, setIsHoveringDashboard] = useState(false);
 
@@ -109,14 +111,19 @@ export const Hero = () => {
                             <MagneticButton
                                 className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-full h-11 sm:h-12 px-6 sm:px-8 text-sm sm:text-base shadow-lg hover:shadow-xl transition-all font-medium flex items-center justify-center gap-2"
                                 magneticStrength={0.2}
+                                onClick={() => router.push("/dashboard")}
                             >
-                                Start Free Trial <ArrowRight className="h-4 w-4" />
+                                Dashboard <ArrowRight className="h-4 w-4" />
                             </MagneticButton>
                             <MagneticButton
                                 className="w-full sm:w-auto border-2 border-orange-500 text-orange-500 hover:bg-orange-50 hover:border-orange-600 hover:text-orange-600 active:bg-orange-100 rounded-full h-11 sm:h-12 px-6 sm:px-8 text-sm sm:text-base transition-all font-medium flex items-center justify-center bg-white"
                                 magneticStrength={0.15}
+                                as="a"
+                                href="https://serviceitplus.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
                             >
-                                View Demo
+                                Inquire / View Demo
                             </MagneticButton>
                         </div>
 

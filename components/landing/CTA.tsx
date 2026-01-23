@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { SectionWrapper } from "./SectionWrapper";
 import { MagneticButton } from "./MagneticButton";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useRouter } from "next/navigation";
 
 /**
  * CTA Section - Performance Optimized
@@ -19,6 +20,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 export const CTA = () => {
     const prefersReducedMotion = useReducedMotion();
+    const router = useRouter();
 
     return (
         <section
@@ -78,8 +80,9 @@ export const CTA = () => {
                             className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg rounded-full bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-lg shadow-orange-500/25 font-medium flex items-center justify-center gap-2 transition-colors"
                             magneticStrength={0.25}
                             scaleOnHover={1.02}
+                            onClick={() => router.push("/dashboard")}
                         >
-                            Start Your Free Trial
+                            Dashboard
                             {/* Static arrow - removed infinite animation */}
                             <ArrowRight className="size-4 sm:size-5" />
                         </MagneticButton>
@@ -87,6 +90,10 @@ export const CTA = () => {
                             className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg rounded-full border-2 border-blue-400/30 text-white hover:bg-white/10 bg-transparent font-medium flex items-center justify-center transition-colors"
                             magneticStrength={0.2}
                             scaleOnHover={1.02}
+                            as="a"
+                            href="https://serviceitplus.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
                             Schedule Demo
                         </MagneticButton>

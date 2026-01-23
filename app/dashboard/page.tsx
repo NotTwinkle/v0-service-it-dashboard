@@ -35,6 +35,74 @@ import {
 
 const COLORS = ["#f16a21", "#10b981", "#ef4444", "#3b82f6", "#8b5cf6"]
 
+// Skeleton Loading Components
+const SkeletonCard = () => (
+  <Card className="border-gray-100 shadow-sm">
+    <CardHeader className="pb-3">
+      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+    </CardHeader>
+    <CardContent>
+      <div className="h-10 w-20 bg-gray-200 rounded animate-pulse mb-2"></div>
+      <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+    </CardContent>
+  </Card>
+)
+
+const SkeletonProjectCard = () => (
+  <Card className="hover:shadow-lg transition-shadow">
+    <CardContent className="p-6">
+      <div className="flex items-center justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="h-6 w-64 bg-gray-200 rounded animate-pulse mb-2"></div>
+          <div className="flex items-center gap-3 mt-1">
+            <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+        <div className="flex items-center gap-6 ml-6">
+          <div className="text-center">
+            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse mb-1"></div>
+            <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="h-12 w-px bg-gray-300"></div>
+          <div className="text-center">
+            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse mb-1"></div>
+            <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="h-12 w-px bg-gray-300"></div>
+          <div className="text-center">
+            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse mb-1"></div>
+            <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div className="ml-4">
+            <div className="h-6 w-6 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+      <div className="mt-4">
+        <div className="w-full bg-gray-200 rounded-full h-2 animate-pulse"></div>
+      </div>
+    </CardContent>
+  </Card>
+)
+
+const SkeletonTaskItem = () => (
+  <div className="p-3 hover:bg-gray-50 transition-colors">
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 rounded-full bg-gray-200 animate-pulse"></div>
+          <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div className="flex items-center gap-3 mt-1 ml-6">
+          <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-3 w-32 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+)
+
 /**
  * Organization Dashboard - Variance Tracking
  * Purpose: Track estimated hours vs actual hours across platforms (Asana, Ivanti)
@@ -55,6 +123,7 @@ export default function OrganizationDashboard() {
   const [projectSupport, setProjectSupport] = useState<Map<string, any>>(new Map())
   const [loadingTasks, setLoadingTasks] = useState<Set<string>>(new Set())
   const [supportTickets, setSupportTickets] = useState<any[]>([])
+  const [loadingSupportTickets, setLoadingSupportTickets] = useState(false)
   
   // Track how many tasks to show per project
   const [visibleTasksCount, setVisibleTasksCount] = useState<Map<string, number>>(new Map())
@@ -103,6 +172,7 @@ export default function OrganizationDashboard() {
 
   const fetchSupportTickets = async () => {
     try {
+      setLoadingSupportTickets(true)
       const response = await fetch('/api/sheets/support')
       const data = await response.json()
       
@@ -111,6 +181,8 @@ export default function OrganizationDashboard() {
       }
     } catch (error: any) {
       console.error('Error fetching support tickets:', error)
+    } finally {
+      setLoadingSupportTickets(false)
     }
   }
 
@@ -313,63 +385,74 @@ export default function OrganizationDashboard() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border-orange-100 shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Total Estimated
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-[#f16a21]">
-                  {loading ? '...' : `${filteredSummary.total_estimated.toFixed(1)}h`}
-                </p>
-                <p className="text-sm text-gray-600 mt-1">From Asana projects</p>
-              </CardContent>
-            </Card>
+            {loading ? (
+              <>
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </>
+            ) : (
+              <>
+                <Card className="border-orange-100 shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Total Estimated
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-[#f16a21]">
+                      {filteredSummary.total_estimated.toFixed(1)}h
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">From Asana projects</p>
+                  </CardContent>
+                </Card>
 
-            <Card className="border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Total Actual
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-emerald-600">
-                  {loading ? '...' : `${filteredSummary.total_actual.toFixed(1)}h`}
-                </p>
-                <p className="text-sm text-gray-600 mt-1">Logged in time tracker</p>
-              </CardContent>
-            </Card>
+                <Card className="border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Total Actual
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-emerald-600">
+                      {filteredSummary.total_actual.toFixed(1)}h
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">Logged in time tracker</p>
+                  </CardContent>
+                </Card>
 
-            <Card className={`shadow-sm hover:shadow-md transition-shadow ${filteredSummary.total_variance >= 0 ? 'border-emerald-100' : 'border-red-100'}`}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Total Variance
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className={`text-3xl font-bold ${filteredSummary.total_variance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {loading ? '...' : `${filteredSummary.total_variance >= 0 ? '+' : ''}${filteredSummary.total_variance.toFixed(1)}h`}
-                </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  {filteredSummary.total_variance >= 0 ? 'Under budget' : 'Over budget'}
-                </p>
-              </CardContent>
-            </Card>
+                <Card className={`shadow-sm hover:shadow-md transition-shadow ${filteredSummary.total_variance >= 0 ? 'border-emerald-100' : 'border-red-100'}`}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Total Variance
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className={`text-3xl font-bold ${filteredSummary.total_variance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {filteredSummary.total_variance >= 0 ? '+' : ''}{filteredSummary.total_variance.toFixed(1)}h
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {filteredSummary.total_variance >= 0 ? 'Under budget' : 'Over budget'}
+                    </p>
+                  </CardContent>
+                </Card>
 
-            <Card className="border-blue-100 shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Active Projects
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold text-blue-600">
-                  {loading ? '...' : filteredSummary.total_projects}
-                </p>
-                <p className="text-sm text-gray-600 mt-1">With 2026 in title</p>
-              </CardContent>
-            </Card>
+                <Card className="border-blue-100 shadow-sm hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Active Projects
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-blue-600">
+                      {filteredSummary.total_projects}
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">With 2026 in title</p>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
         </div>
 
@@ -427,34 +510,44 @@ export default function OrganizationDashboard() {
             </div>
 
             {/* Summary Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="p-4 bg-white border border-gray-200 rounded-lg">
-                <p className="text-xs text-gray-600 mb-1">Projects Found</p>
-                <p className="text-2xl font-bold text-[#404040]">{filteredSummary.total_projects}</p>
+            {loading ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="p-4 bg-white border border-gray-200 rounded-lg">
+                    <div className="h-3 w-24 bg-gray-200 rounded animate-pulse mb-2"></div>
+                    <div className="h-8 w-12 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                ))}
               </div>
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-xs text-red-700 mb-1">Over Budget</p>
-                <p className="text-2xl font-bold text-red-600">{filteredSummary.projects_over}</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="p-4 bg-white border border-gray-200 rounded-lg">
+                  <p className="text-xs text-gray-600 mb-1">Projects Found</p>
+                  <p className="text-2xl font-bold text-[#404040]">{filteredSummary.total_projects}</p>
+                </div>
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-xs text-red-700 mb-1">Over Budget</p>
+                  <p className="text-2xl font-bold text-red-600">{filteredSummary.projects_over}</p>
+                </div>
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <p className="text-xs text-emerald-700 mb-1">Under Budget</p>
+                  <p className="text-2xl font-bold text-emerald-600">{filteredSummary.projects_under}</p>
+                </div>
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-xs text-gray-600 mb-1">On Track</p>
+                  <p className="text-2xl font-bold text-gray-600">{filteredSummary.projects_on_track}</p>
+                </div>
               </div>
-              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                <p className="text-xs text-emerald-700 mb-1">Under Budget</p>
-                <p className="text-2xl font-bold text-emerald-600">{filteredSummary.projects_under}</p>
-              </div>
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <p className="text-xs text-gray-600 mb-1">On Track</p>
-                <p className="text-2xl font-bold text-gray-600">{filteredSummary.projects_on_track}</p>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Projects List */}
           {loading ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-                <p className="text-gray-500">Loading projects...</p>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <SkeletonProjectCard key={i} />
+              ))}
+            </div>
           ) : displayProjects.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
@@ -562,9 +655,10 @@ export default function OrganizationDashboard() {
                             </h5>
                             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                               {loadingTasks.has(project.asana_project_gid) ? (
-                                <div className="p-4 text-center">
-                                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500 mx-auto mb-2"></div>
-                                  <p className="text-sm text-gray-500">Loading tasks...</p>
+                                <div className="divide-y divide-gray-200">
+                                  {[1, 2, 3].map((i) => (
+                                    <SkeletonTaskItem key={i} />
+                                  ))}
                                 </div>
                               ) : projectTasks.has(project.asana_project_gid) ? (
                                 (() => {
@@ -658,7 +752,16 @@ export default function OrganizationDashboard() {
                                               <div className="bg-gray-50">
                                                 {sectionTasks.length > 0 ? (
                                                   <>
-                                                    {visibleTasks.map((task: any) => (
+                                                    {visibleTasks.length === 0 ? (
+                                                      <div className="p-3 pl-8">
+                                                        <div className="space-y-2">
+                                                          {[1, 2, 3].map((i) => (
+                                                            <SkeletonTaskItem key={i} />
+                                                          ))}
+                                                        </div>
+                                                      </div>
+                                                    ) : (
+                                                      visibleTasks.map((task: any) => (
                                                       <div key={task.gid} className="p-3 pl-8 hover:bg-gray-100 transition-colors border-b border-gray-200 last:border-b-0">
                                                         <div className="flex items-start justify-between gap-3">
                                                           <div className="flex-1 min-w-0">
@@ -687,7 +790,8 @@ export default function OrganizationDashboard() {
                                                           </div>
                                                         </div>
                                                       </div>
-                                                    ))}
+                                                      ))
+                                                    )}
                                                     
                                                     {remainingCount > 0 && (
                                                       <button
@@ -758,7 +862,31 @@ export default function OrganizationDashboard() {
                               })()}
                             </h5>
                             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                              {(() => {
+                              {loadingSupportTickets ? (
+                                <div className="divide-y divide-gray-200">
+                                  {[1, 2, 3].map((i) => (
+                                    <div key={i} className="p-4">
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <div className="h-5 w-20 bg-gray-200 rounded animate-pulse"></div>
+                                            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                                          </div>
+                                          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+                                          <div className="flex items-center gap-3">
+                                            <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
+                                            <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <div className="h-6 w-12 bg-gray-200 rounded animate-pulse mb-1"></div>
+                                          <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (() => {
                                 const tickets = getProjectSupportTickets(project.project_name || project.asana_project_name || '')
                                 
                                 if (tickets.length === 0) {

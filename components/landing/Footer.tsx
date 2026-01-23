@@ -34,7 +34,7 @@ const columnVariants = {
         opacity: 1,
         y: 0,
         transition: {
-            type: "spring",
+            type: "spring" as const,
             stiffness: 300,
             damping: 25,
         }
@@ -44,6 +44,30 @@ const columnVariants = {
 // Animated link component with underline effect
 const AnimatedLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
     const prefersReducedMotion = useReducedMotion();
+    const isExternal = href.startsWith("http");
+
+    if (isExternal) {
+        return (
+            <a 
+                href={href} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="relative group inline-block"
+            >
+                <span className="relative z-10 transition-colors duration-200 group-hover:text-orange-500">
+                    {children}
+                </span>
+                {!prefersReducedMotion && (
+                    <motion.span
+                        className="absolute bottom-0 left-0 h-[1px] bg-orange-500"
+                        initial={{ width: 0 }}
+                        whileHover={{ width: "100%" }}
+                        transition={{ duration: 0.2 }}
+                    />
+                )}
+            </a>
+        );
+    }
 
     return (
         <Link href={href} className="relative group inline-block">
@@ -67,21 +91,21 @@ export const Footer = () => {
 
     const footerLinks = {
         platform: [
-            { label: "Task Management", href: "#" },
-            { label: "Time Reconciliation", href: "#" },
-            { label: "Variance Analytics", href: "#" },
-            { label: "Integrations", href: "#" },
+            { label: "ITSM", href: "https://www.serviceitplus.com/it-service-management" },
+            { label: "ITAM", href: "https://www.serviceitplus.com/itam" },
+            { label: "Security Services", href: "https://www.serviceitplus.com/security-services" },
+            { label: "Education and Training", href: "https://www.serviceitplus.com/education-and-training-services" },
         ],
         company: [
-            { label: "About Us", href: "#" },
-            { label: "Careers", href: "#" },
-            { label: "Blog", href: "#" },
-            { label: "Contact", href: "#" },
+            { label: "About Us", href: "https://www.serviceitplus.com/about" },
+            { label: "Contact Us", href: "https://www.serviceitplus.com/contact" },
+            { label: "Resources", href: "https://www.serviceitplus.com/resources" },
+            { label: "Careers", href: "https://www.serviceitplus.com/careers" },
         ],
         legal: [
-            { label: "Privacy Policy", href: "#" },
-            { label: "Terms of Service", href: "#" },
-            { label: "Security", href: "#" },
+            { label: "Privacy Policy", href: "https://www.serviceitplus.com/privacy-policy" },
+            { label: "Terms and Conditions", href: "https://www.serviceitplus.com/terms-and-conditions" },
+            { label: "Company Profile", href: "https://www.serviceitplus.com/_files/ugd/c2b3db_cc0c41bf0ff244ed89306f5903362ebb.pdf" },
         ],
     };
 
@@ -90,7 +114,7 @@ export const Footer = () => {
             <SectionWrapper>
                 <motion.div
                     className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-12"
-                    variants={prefersReducedMotion ? {} : containerVariants}
+                    variants={prefersReducedMotion ? undefined : containerVariants}
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-50px" }}
@@ -98,7 +122,7 @@ export const Footer = () => {
                     {/* Brand Column */}
                     <motion.div
                         className="col-span-1 sm:col-span-2 md:col-span-1"
-                        variants={prefersReducedMotion ? {} : columnVariants}
+                        variants={prefersReducedMotion ? undefined : columnVariants}
                     >
                         <Link href="/" className="flex items-center gap-2 mb-4 group">
                             <motion.div
@@ -120,7 +144,7 @@ export const Footer = () => {
                     </motion.div>
 
                     {/* Platform Column */}
-                    <motion.div variants={prefersReducedMotion ? {} : columnVariants}>
+                    <motion.div variants={prefersReducedMotion ? undefined : columnVariants}>
                         <h4 className="font-bold text-astronaut mb-4">Platform</h4>
                         <ul className="space-y-2 text-sm text-gray-600">
                             {footerLinks.platform.map((link, i) => (
@@ -138,7 +162,7 @@ export const Footer = () => {
                     </motion.div>
 
                     {/* Company Column */}
-                    <motion.div variants={prefersReducedMotion ? {} : columnVariants}>
+                    <motion.div variants={prefersReducedMotion ? undefined : columnVariants}>
                         <h4 className="font-bold text-astronaut mb-4">Company</h4>
                         <ul className="space-y-2 text-sm text-gray-600">
                             {footerLinks.company.map((link, i) => (
@@ -156,7 +180,7 @@ export const Footer = () => {
                     </motion.div>
 
                     {/* Legal Column */}
-                    <motion.div variants={prefersReducedMotion ? {} : columnVariants}>
+                    <motion.div variants={prefersReducedMotion ? undefined : columnVariants}>
                         <h4 className="font-bold text-astronaut mb-4">Legal</h4>
                         <ul className="space-y-2 text-sm text-gray-600">
                             {footerLinks.legal.map((link, i) => (
@@ -184,17 +208,24 @@ export const Footer = () => {
                 >
                     <p>© {new Date().getFullYear()} Service IT+. All rights reserved.</p>
 
-                    {/* Social Icons Placeholder with hover effects */}
+                    {/* Social Icons with hover effects */}
                     <div className="flex gap-4">
-                        {["Twitter", "LinkedIn", "GitHub"].map((social, i) => (
+                        {[
+                            { name: "Facebook", url: "https://www.facebook.com/ServiceITplus" },
+                            { name: "X", url: "https://twitter.com/ServiceITInc" },
+                            { name: "LinkedIn", url: "https://www.linkedin.com/company/serviceit-plus/posts/?feedView=all" },
+                            { name: "YouTube", url: "https://www.youtube.com/@ServiceIT_plus" },
+                        ].map((social) => (
                             <motion.a
-                                key={social}
-                                href="#"
+                                key={social.name}
+                                href={social.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="text-gray-400 hover:text-orange-500 transition-colors text-xs"
                                 whileHover={prefersReducedMotion ? {} : { scale: 1.1, y: -2 }}
                                 transition={{ type: "spring", stiffness: 400 }}
                             >
-                                {social}
+                                {social.name}
                             </motion.a>
                         ))}
                     </div>
