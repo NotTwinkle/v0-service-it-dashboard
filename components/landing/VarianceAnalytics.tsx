@@ -48,10 +48,9 @@ export const VarianceAnalytics = () => {
     return (
         <section
             id="variance"
-            className="pt-8 sm:pt-12 pb-16 sm:pb-20 md:pb-24 bg-white overflow-hidden flex-shrink-0"
-            style={{ width: "100vw" }}
+            className="pt-20 pb-16 sm:pb-20 md:pb-24 bg-white overflow-hidden flex-shrink-0 w-full lg:w-screen"
         >
-            <SectionWrapper>
+            <SectionWrapper className="pt-8 md:pt-12">
                 <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 md:gap-16 items-center">
                     {/* Text Content */}
                     <motion.div

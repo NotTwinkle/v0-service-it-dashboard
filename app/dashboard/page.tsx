@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,10 +30,53 @@ import {
   Target,
   Zap,
   CheckCircle,
-  Ticket
+  ExternalLink,
 } from "lucide-react"
+import { findMatchingCompany, type Company } from "@/lib/company-matcher"
 
 const COLORS = ["#f16a21", "#10b981", "#ef4444", "#3b82f6", "#8b5cf6"]
+
+// Time Tracker base URL - change this to your actual time tracker URL
+const TIME_TRACKER_URL = "https://192.168.2.18/timetrackerv2/timelogsadd"
+
+/**
+ * Generate a URL for opening the Time Tracker with autofill parameters.
+ * Pass customer_id when we have a matched company (same DB as Time Tracker) for reliable dropdown set.
+ */
+const generateAutofillUrl = (params: {
+  customer?: string       // Company name (fallback when no customer_id)
+  customer_id?: number   // Company ID from DB – use when matched for dropdown
+  product?: string        // Product name (will be matched via lookup)
+  product_id?: number    // Product ID from DB – use when available for dropdown
+  ref?: string           // Reference number (Asana GID or Ivanti ticket number)
+  task?: string          // Task description
+  category?: string      // Category name (will be matched in dropdown)
+  subcategory?: string   // Subcategory name (will be matched in dropdown)
+  status?: string        // Status name (will be matched in dropdown)
+  billable?: string      // Billable option (will be matched in dropdown)
+  source?: 'asana' | 'ivanti'  // Source indicator for tracking
+}) => {
+  const base = TIME_TRACKER_URL.split('?')[0]
+  const url = new URL(base)
+  
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      url.searchParams.set(key, String(value))
+    }
+  })
+  
+  return url.toString()
+}
+
+/**
+ * Open Time Tracker in new tab with autofill data
+ */
+const openTimeTracker = (params: Parameters<typeof generateAutofillUrl>[0]) => {
+  const url = generateAutofillUrl(params)
+  if (typeof window !== 'undefined' && window.open) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+}
 
 // Skeleton Loading Components
 const SkeletonCard = () => (
@@ -114,16 +157,20 @@ export default function OrganizationDashboard() {
   // Asana variance data
   const [asanaProjects, setAsanaProjects] = useState<any[]>([])
   const [asanaSummary, setAsanaSummary] = useState<any>(null)
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null)
   
   // Expanded projects tracking
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set())
   
-  // Tasks and support tickets data
+  // Tasks and Ivanti tickets data
   const [projectTasks, setProjectTasks] = useState<Map<string, any>>(new Map())
-  const [projectSupport, setProjectSupport] = useState<Map<string, any>>(new Map())
   const [loadingTasks, setLoadingTasks] = useState<Set<string>>(new Set())
-  const [supportTickets, setSupportTickets] = useState<any[]>([])
-  const [loadingSupportTickets, setLoadingSupportTickets] = useState(false)
+  const [ivantiTickets, setIvantiTickets] = useState<any[]>([]) // All Ivanti tickets (loaded once, cached)
+  const [loadingIvantiTickets, setLoadingIvantiTickets] = useState(false)
+  const [ivantiTicketsLoaded, setIvantiTicketsLoaded] = useState(false) // Track if tickets have been loaded
+  
+  // Companies (for matching)
+  const [companies, setCompanies] = useState<Company[]>([])
   
   // Track how many tasks to show per project
   const [visibleTasksCount, setVisibleTasksCount] = useState<Map<string, number>>(new Map())
@@ -133,20 +180,36 @@ export default function OrganizationDashboard() {
   
   // Track visible tasks per section
   const [visibleTasksPerSection, setVisibleTasksPerSection] = useState<Map<string, number>>(new Map())
+
+  // Per-project search terms
+  const [asanaSearchByProject, setAsanaSearchByProject] = useState<Record<string, string>>({})
+  const [ivantiSearchByProject, setIvantiSearchByProject] = useState<Record<string, string>>({})
   
   // Filters and search
   const [searchTerm, setSearchTerm] = useState("")
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<'all' | 'over_budget' | 'under_budget' | 'on_track'>('all')
   const [showTopOnly, setShowTopOnly] = useState(false)
   const [sortBy, setSortBy] = useState<'variance' | 'estimated' | 'actual' | 'name'>('variance')
   
+  // Date/Year filter - default to showing 2025 & 2026 (can be changed to 'all' to show all years)
+  const [selectedYear, setSelectedYear] = useState<string>('2025-2026') // 'all', '2024', '2025', '2026', '2025-2026', etc.
+  const [selectedMonth, setSelectedMonth] = useState<string>('all') // 'all', '01', '02', etc.
+  
   const [apiError, setApiError] = useState<string | null>(null)
 
-  // Fetch Asana variance data and support tickets
+  // Fetch Asana variance data and companies on initial load
+  // Ivanti tickets will be loaded lazily when first project is expanded
   useEffect(() => {
     fetchAsanaVariance()
-    fetchSupportTickets()
+    fetchCompanies()
   }, [])
+
+  // Debounce search to keep UI responsive on large lists
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearchTerm(searchTerm), 200)
+    return () => clearTimeout(t)
+  }, [searchTerm])
 
   const fetchAsanaVariance = async () => {
     try {
@@ -157,8 +220,11 @@ export default function OrganizationDashboard() {
       const data = await response.json()
       
       if (data.success) {
-        setAsanaProjects(data.projects || [])
+        const projects = data.projects || []
+
+        setAsanaProjects(projects)
         setAsanaSummary(data.summary || null)
+        setLastUpdatedAt(new Date().toISOString())
       } else {
         setApiError(data.error || 'Failed to fetch variance data')
       }
@@ -170,19 +236,43 @@ export default function OrganizationDashboard() {
     }
   }
 
-  const fetchSupportTickets = async () => {
+  const fetchIvantiTickets = async () => {
+    // Only fetch once, then cache the results
+    if (ivantiTicketsLoaded || loadingIvantiTickets) return
+    
     try {
-      setLoadingSupportTickets(true)
-      const response = await fetch('/api/sheets/support')
-      const data = await response.json()
+      setLoadingIvantiTickets(true)
+      
+      // Try direct API first, fallback to Google Sheets (where n8n writes)
+      let response = await fetch('/api/ivanti/tickets')
+      let data = await response.json()
+      
+      // If API fails or returns no tickets, try Google Sheets
+      if (!data.success || (data.tickets && data.tickets.length === 0)) {
+        response = await fetch('/api/sheets/ivanti')
+        data = await response.json()
+      }
       
       if (data.success) {
-        setSupportTickets(data.tickets || [])
+        setIvantiTickets(data.tickets || [])
+        setIvantiTicketsLoaded(true)
+        // keep debug payload available for local inspection, but avoid noisy console logs
       }
     } catch (error: any) {
-      console.error('Error fetching support tickets:', error)
+      console.error('Error fetching Ivanti tickets:', error)
+      // Try Google Sheets as fallback
+      try {
+        const response = await fetch('/api/sheets/ivanti')
+        const data = await response.json()
+        if (data.success) {
+          setIvantiTickets(data.tickets || [])
+          setIvantiTicketsLoaded(true)
+        }
+      } catch (fallbackError: any) {
+        console.error('Error fetching from Google Sheets fallback:', fallbackError)
+      }
     } finally {
-      setLoadingSupportTickets(false)
+      setLoadingIvantiTickets(false)
     }
   }
 
@@ -216,80 +306,247 @@ export default function OrganizationDashboard() {
     }
   }
 
-  const getProjectSupportTickets = (projectName: string) => {
-    // Extract company name from project name (format: Year - Company - Product)
-    const parts = projectName.split('-').map(p => p.trim())
-    if (parts.length < 2) return []
-    
-    const companyName = parts[1] // Second part is company name
-    
-    // Find tickets matching this company (case-insensitive)
-    const matchingTickets = supportTickets.filter(ticket => 
-      ticket.company?.toLowerCase().includes(companyName.toLowerCase())
-    )
-    
-    // Return top 3 by actual effort
-    return matchingTickets.slice(0, 3)
+  const fetchCompanies = async () => {
+    try {
+      const response = await fetch('/api/db/companies')
+      const data = await response.json()
+      if (data.success) {
+        setCompanies(data.companies || [])
+      }
+    } catch (error: any) {
+      console.error('Error fetching companies:', error)
+    }
   }
 
-  // Filter and sort projects
-  const filteredProjects = asanaProjects
-    .filter(p => {
-      // Only show projects with "2026" in the title
-      const projectName = p.project_name || p.asana_project_name || ''
-      return projectName.includes('2026')
-    })
-    .filter(p => {
-      // Search filter
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase()
-        return (
-          p.project_name?.toLowerCase().includes(searchLower) ||
-          p.asana_project_name?.toLowerCase().includes(searchLower)
+  /**
+   * Resolve product_id via DB (avoids PHPMaker /api/lookup 401 issues).
+   * If matching fails, we still open with product name as a fallback.
+   */
+  const openTimeTrackerAutofill = async (
+    params: Parameters<typeof generateAutofillUrl>[0] & { database?: string }
+  ) => {
+    try {
+      const database = params.database || 'time_trackingv2'
+      const hasProductId =
+        typeof params.product_id === 'number' && !Number.isNaN(params.product_id)
+      const productName = (params.product || '').trim()
+
+      if (!hasProductId && productName) {
+        const res = await fetch(
+          `/api/db/products/match?database=${encodeURIComponent(database)}&name=${encodeURIComponent(productName)}`
         )
-      }
-      return true
-    })
-    .filter(p => {
-      // Status filter
-      if (statusFilter === 'all') return true
-      return p.status === statusFilter
-    })
-    .sort((a, b) => {
-      // Sort
-      switch (sortBy) {
-        case 'variance':
-          return Math.abs(b.variance_hours) - Math.abs(a.variance_hours)
-        case 'estimated':
-          return b.estimated_hours - a.estimated_hours
-        case 'actual':
-          return b.actual_hours - a.actual_hours
-        case 'name':
-          return (a.project_name || a.asana_project_name || '').localeCompare(b.project_name || b.asana_project_name || '')
-        default:
-          return 0
-      }
-    })
+        const json = await res.json().catch(() => null)
+        const match = json?.success ? json?.match : null
 
-  const displayProjects = showTopOnly ? filteredProjects.slice(0, 3) : filteredProjects
+        if (match?.id) {
+          openTimeTracker({
+            ...params,
+            product_id: Number(match.id),
+            // Keep product label too (human readable + PHP fallback paths)
+            product: match.name || params.product,
+          })
+          return
+        }
+      }
+    } catch {
+      // ignore and fallback
+    }
 
-  // Calculate summary
-  const filteredSummary = {
-    total_projects: filteredProjects.length,
-    total_estimated: filteredProjects.reduce((sum, p) => sum + p.estimated_hours, 0),
-    total_actual: filteredProjects.reduce((sum, p) => sum + p.actual_hours, 0),
-    total_variance: filteredProjects.reduce((sum, p) => sum + p.variance_hours, 0),
-    projects_over: filteredProjects.filter(p => p.status === 'over_budget').length,
-    projects_under: filteredProjects.filter(p => p.status === 'under_budget').length,
-    projects_on_track: filteredProjects.filter(p => p.status === 'on_track').length,
+    openTimeTracker(params)
   }
 
-  // Variance distribution for chart
-  const varianceChartData = [
-    { name: 'Over Budget', value: filteredSummary.projects_over, fill: '#ef4444' },
-    { name: 'Under Budget', value: filteredSummary.projects_under, fill: '#10b981' },
-    { name: 'On Track', value: filteredSummary.projects_on_track, fill: '#6b7280' },
-  ].filter(item => item.value > 0)
+  /**
+   * Parse project names formatted like: "Year - Client - Product"
+   * Note: Asana titles often use an en-dash (–) instead of a hyphen (-).
+   */
+  const getProjectNameParts = (projectName: string) => {
+    const trimmed = (projectName || '').trim()
+    if (!trimmed) return []
+
+    const splitOnDash = (s: string) =>
+      s
+        .split(/\s[-–—]\s/) // " - ", " – ", " — "
+        .map((p) => p.trim())
+        .filter(Boolean)
+
+    const parts = splitOnDash(trimmed)
+    if (parts.length >= 2) return parts
+
+    // Fallback for names that don't include spaces around dashes
+    return trimmed
+      .split('-')
+      .map((p) => p.trim())
+      .filter(Boolean)
+  }
+
+  const parseProjectTitle = (projectName: string) => {
+    const parts = getProjectNameParts(projectName)
+    return {
+      year: parts[0] || '',
+      client: parts[1] || '',
+      // Join the rest in case product contains dashes
+      product: parts.length >= 3 ? parts.slice(2).join(' - ').trim() : '',
+      parts,
+    }
+  }
+
+
+  const getProjectCompany = (projectName: string): Company | null => {
+    // Extract company name from project format: "Year - Client - Product"
+    const { client } = parseProjectTitle(projectName)
+    if (!client) return null
+    const projectCompanyName = client.trim()
+    if (!projectCompanyName || companies.length === 0) return null
+    
+    // Use smart matcher to find matching company
+    return findMatchingCompany(projectCompanyName, companies)
+  }
+
+  const getProjectIvantiTickets = (projectName: string) => {
+    // Extract company name from project format: "Year - Client - Product"
+    const { client } = parseProjectTitle(projectName)
+    if (!client) return { incidents: [], servicereqs: [] }
+    const projectCompanyName = client.trim()
+    if (!projectCompanyName) return { incidents: [], servicereqs: [] }
+    
+    // Find matching company from database
+    const matchedCompany = findMatchingCompany(projectCompanyName, companies)
+    
+    // Match Ivanti tickets using smart matching
+    const matching = ivantiTickets.filter(t => {
+      if (!t.company) return false
+      
+      // Use smart matcher if we have companies loaded
+      if (companies.length > 0) {
+        const ivantiCompany = findMatchingCompany(t.company, companies)
+        // If both match the same company, or if project company matches ivanti company name
+        if (matchedCompany && ivantiCompany && matchedCompany.id === ivantiCompany.id) {
+          return true
+        }
+        // Also check direct name matching
+        if (findMatchingCompany(projectCompanyName, [{ id: 0, name: t.company }])) {
+          return true
+        }
+      }
+      
+      // Fallback to basic matching (original logic)
+      const ivantiCompany = t.company.toLowerCase().trim()
+      const projectCompany = projectCompanyName.toLowerCase().trim()
+      
+      if (companies.length > 0) {
+        // Use smart matcher
+        return findMatchingCompany(projectCompanyName, [{ id: 0, name: t.company }]) !== null
+      }
+      
+      // Basic contains match
+      return ivantiCompany.includes(projectCompany) || projectCompany.includes(ivantiCompany)
+    })
+    
+    // Separate by category - NO LIMIT, show all matching tickets
+    const incidents = matching
+      .filter(t => t.category === 'Incident')
+      .sort((a, b) => b.actual_effort - a.actual_effort)
+    
+    const servicereqs = matching
+      .filter(t => t.category === 'ServiceReq')
+      .sort((a, b) => b.actual_effort - a.actual_effort)
+    
+    return { incidents, servicereqs, matchedCompany }
+  }
+
+  // Filter and sort projects (memoized to keep render fast)
+  const filteredProjects = useMemo(() => {
+    const projects = (asanaProjects || [])
+      .filter((p) => {
+        // Year filter: Extract year from project name (format: "Year - Client - Product")
+        if (selectedYear === 'all') return true
+        const projectName = p.project_name || p.asana_project_name || ''
+        if (selectedYear === '2025-2026') return projectName.includes('2025') || projectName.includes('2026')
+        if (!projectName.includes(selectedYear)) return false
+        // Month selector remains available; currently not applied because project names don't include month.
+        // Enhancement path: filter by timelog dates (requires API support) or Asana project created_at.
+        return true
+      })
+      .filter((p) => {
+        if (!debouncedSearchTerm) return true
+        const s = debouncedSearchTerm.toLowerCase()
+        return (
+          p.project_name?.toLowerCase().includes(s) ||
+          p.asana_project_name?.toLowerCase().includes(s)
+        )
+      })
+      .filter((p) => (statusFilter === 'all' ? true : p.status === statusFilter))
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'variance':
+            return Math.abs(b.variance_hours) - Math.abs(a.variance_hours)
+          case 'estimated':
+            return b.estimated_hours - a.estimated_hours
+          case 'actual':
+            return b.actual_hours - a.actual_hours
+          case 'name':
+            return (a.project_name || a.asana_project_name || '').localeCompare(b.project_name || b.asana_project_name || '')
+          default:
+            return 0
+        }
+      })
+    return projects
+  }, [asanaProjects, selectedYear, selectedMonth, debouncedSearchTerm, statusFilter, sortBy])
+
+  const displayProjects = useMemo(
+    () => (showTopOnly ? filteredProjects.slice(0, 3) : filteredProjects),
+    [filteredProjects, showTopOnly]
+  )
+
+  const filteredSummary = useMemo(() => {
+    const total_estimated = filteredProjects.reduce((sum, p) => sum + p.estimated_hours, 0)
+    const total_actual = filteredProjects.reduce((sum, p) => sum + p.actual_hours, 0)
+    const total_actual_ivanti = filteredProjects.reduce((sum, p) => sum + (p.actual_hours_ivanti ?? 0), 0)
+    const total_actual_timetracker = filteredProjects.reduce((sum, p) => {
+      const total = p.actual_hours ?? 0
+      const iv = p.actual_hours_ivanti ?? 0
+      const tt = p.actual_hours_timetracker ?? Math.max(0, total - iv)
+      return sum + tt
+    }, 0)
+    const total_variance = filteredProjects.reduce((sum, p) => sum + p.variance_hours, 0)
+    const projects_over = filteredProjects.filter(p => p.status === 'over_budget').length
+    const projects_under = filteredProjects.filter(p => p.status === 'under_budget').length
+    const projects_on_track = filteredProjects.filter(p => p.status === 'on_track').length
+    const projects_missing_estimate = filteredProjects.filter(p => (p.estimated_hours ?? 0) <= 0).length
+    const projects_with_ivanti = filteredProjects.filter(p => ((p.actual_hours_ivanti ?? 0) > 0) || ((p.ivanti_ticket_count ?? 0) > 0)).length
+    const projects_at_risk = filteredProjects.filter(p => {
+      const est = p.estimated_hours ?? 0
+      const variance = p.variance_hours ?? 0
+      const actual = p.actual_hours ?? 0
+      if (est <= 0) return false
+      if (p.status === 'over_budget') return false
+      if (actual <= 0) return false
+      // "At risk" = still under budget, but within 10% of estimate remaining.
+      return variance >= 0 && (variance / est) <= 0.10
+    }).length
+    return {
+      total_projects: filteredProjects.length,
+      total_estimated,
+      total_actual,
+      total_actual_timetracker,
+      total_actual_ivanti,
+      total_variance,
+      projects_over,
+      projects_under,
+      projects_on_track,
+      projects_at_risk,
+      projects_missing_estimate,
+      projects_with_ivanti,
+    }
+  }, [filteredProjects])
+
+  const varianceChartData = useMemo(() => {
+    return [
+      { name: 'Over Budget', value: filteredSummary.projects_over, fill: '#ef4444' },
+      { name: 'Under Budget', value: filteredSummary.projects_under, fill: '#10b981' },
+      { name: 'On Track', value: filteredSummary.projects_on_track, fill: '#6b7280' },
+    ].filter(item => item.value > 0)
+  }, [filteredSummary.projects_over, filteredSummary.projects_under, filteredSummary.projects_on_track])
 
   // Toggle project expansion
   const toggleProject = (projectGid: string) => {
@@ -308,9 +565,13 @@ export default function OrganizationDashboard() {
         return next
       })
     } else {
-      // Expanding - fetch tasks
+      // Expanding - fetch tasks and Ivanti tickets (lazy load)
       newExpanded.add(projectGid)
       fetchProjectTasks(projectGid)
+      // Load Ivanti tickets on first expansion (they'll be cached for subsequent projects)
+      if (!ivantiTicketsLoaded) {
+        fetchIvantiTickets()
+      }
     }
     setExpandedProjects(newExpanded)
   }
@@ -374,7 +635,15 @@ export default function OrganizationDashboard() {
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-[#404040] mb-2">Project Overview</h2>
           <p className="text-gray-600 mb-6">
-            Track project hours (Asana + Support) • <span className="font-semibold text-[#f16a21]">2026 Projects Only</span>
+            Track project hours (Asana + Ivanti) • <span className="font-semibold text-[#f16a21]">
+              {selectedYear === 'all' 
+                ? 'All Years' 
+                : selectedYear === '2025-2026'
+                ? '2025 & 2026 Projects'
+                : selectedMonth === 'all' 
+                ? `${selectedYear} Projects` 
+                : `${selectedYear}-${selectedMonth} Projects`}
+            </span>
           </p>
 
           {apiError && (
@@ -404,13 +673,18 @@ export default function OrganizationDashboard() {
                     <p className="text-3xl font-bold text-[#f16a21]">
                       {filteredSummary.total_estimated.toFixed(1)}h
                     </p>
-                    <p className="text-sm text-gray-600 mt-1">From Asana projects</p>
+                    <p className="text-sm text-gray-600 mt-1" title="Estimated hours are derived from Asana task estimates.">
+                      From Asana estimates
+                    </p>
                   </CardContent>
                 </Card>
 
                 <Card className="border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    <CardTitle
+                      className="text-xs font-semibold uppercase tracking-wider text-gray-500"
+                      title="Actual hours combine Time Tracker logs + Ivanti effort (when available)."
+                    >
                       Total Actual
                     </CardTitle>
                   </CardHeader>
@@ -418,13 +692,23 @@ export default function OrganizationDashboard() {
                     <p className="text-3xl font-bold text-emerald-600">
                       {filteredSummary.total_actual.toFixed(1)}h
                     </p>
-                    <p className="text-sm text-gray-600 mt-1">Logged in time tracker</p>
+                    <p className="text-sm text-gray-600 mt-1">Time tracker + Ivanti</p>
+                    {(filteredSummary.total_actual_timetracker > 0 || filteredSummary.total_actual_ivanti > 0) && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {filteredSummary.total_actual_timetracker > 0 ? `Tracker ${filteredSummary.total_actual_timetracker.toFixed(1)}h` : null}
+                        {(filteredSummary.total_actual_timetracker > 0 && filteredSummary.total_actual_ivanti > 0) ? " • " : null}
+                        {filteredSummary.total_actual_ivanti > 0 ? `Ivanti ${filteredSummary.total_actual_ivanti.toFixed(1)}h` : null}
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
 
                 <Card className={`shadow-sm hover:shadow-md transition-shadow ${filteredSummary.total_variance >= 0 ? 'border-emerald-100' : 'border-red-100'}`}>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                    <CardTitle
+                      className="text-xs font-semibold uppercase tracking-wider text-gray-500"
+                      title="Variance = Estimated − Actual. Positive means under budget."
+                    >
                       Total Variance
                     </CardTitle>
                   </CardHeader>
@@ -448,7 +732,15 @@ export default function OrganizationDashboard() {
                     <p className="text-3xl font-bold text-blue-600">
                       {filteredSummary.total_projects}
                     </p>
-                    <p className="text-sm text-gray-600 mt-1">With 2026 in title</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {selectedYear === 'all' 
+                        ? 'All projects' 
+                        : selectedYear === '2025-2026'
+                        ? '2025 & 2026 projects'
+                        : selectedMonth === 'all' 
+                        ? `${selectedYear} projects` 
+                        : `${selectedYear}-${selectedMonth} projects`}
+                    </p>
                   </CardContent>
                 </Card>
               </>
@@ -474,6 +766,76 @@ export default function OrganizationDashboard() {
               </div>
               
               <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={fetchAsanaVariance}
+                  disabled={loading}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    loading
+                      ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  }`}
+                  title="Refresh data"
+                >
+                  Refresh
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSearchTerm("")
+                    setStatusFilter("all")
+                    setShowTopOnly(false)
+                    setSortBy("variance")
+                    setSelectedYear("2025-2026")
+                    setSelectedMonth("all")
+                  }}
+                  className="px-4 py-2.5 rounded-lg text-sm font-medium transition-colors bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  title="Clear filters"
+                >
+                  Clear filters
+                </button>
+
+                {/* Year Selector */}
+                <select
+                  value={selectedYear}
+                  onChange={(e) => {
+                    setSelectedYear(e.target.value)
+                    if (e.target.value === 'all' || e.target.value === '2025-2026') {
+                      setSelectedMonth('all') // Reset month when year is 'all' or range
+                    }
+                  }}
+                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-sm font-medium"
+                >
+                  <option value="all">All Years</option>
+                  <option value="2025-2026">2025 & 2026</option>
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026">2026</option>
+                  <option value="2027">2027</option>
+                </select>
+
+                {/* Month Selector (only shown when a specific year is selected, not for ranges) */}
+                {selectedYear !== 'all' && selectedYear !== '2025-2026' && (
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-sm font-medium"
+                  >
+                    <option value="all">All Months</option>
+                    <option value="01">January</option>
+                    <option value="02">February</option>
+                    <option value="03">March</option>
+                    <option value="04">April</option>
+                    <option value="05">May</option>
+                    <option value="06">June</option>
+                    <option value="07">July</option>
+                    <option value="08">August</option>
+                    <option value="09">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                  </select>
+                )}
+
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
@@ -520,7 +882,7 @@ export default function OrganizationDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-3">
                 <div className="p-4 bg-white border border-gray-200 rounded-lg">
                   <p className="text-xs text-gray-600 mb-1">Projects Found</p>
                   <p className="text-2xl font-bold text-[#404040]">{filteredSummary.total_projects}</p>
@@ -537,7 +899,25 @@ export default function OrganizationDashboard() {
                   <p className="text-xs text-gray-600 mb-1">On Track</p>
                   <p className="text-2xl font-bold text-gray-600">{filteredSummary.projects_on_track}</p>
                 </div>
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-xs text-amber-800 mb-1" title="At risk = under budget but within 10% of the estimate remaining.">
+                    At Risk
+                  </p>
+                  <p className="text-2xl font-bold text-amber-700">{filteredSummary.projects_at_risk}</p>
+                </div>
+                <div className="p-4 bg-violet-50 border border-violet-200 rounded-lg">
+                  <p className="text-xs text-violet-800 mb-1" title="Projects that have any Ivanti hours / tickets matched.">
+                    Has Ivanti
+                  </p>
+                  <p className="text-2xl font-bold text-violet-700">{filteredSummary.projects_with_ivanti}</p>
+                </div>
               </div>
+            )}
+
+            {!loading && lastUpdatedAt && (
+              <p className="text-xs text-gray-400 mb-3">
+                Last updated: {new Date(lastUpdatedAt).toLocaleString()}
+              </p>
             )}
           </div>
 
@@ -560,13 +940,24 @@ export default function OrganizationDashboard() {
             <div className="space-y-4">
               {displayProjects.map((project) => {
                 const isExpanded = expandedProjects.has(project.asana_project_gid)
+                const ivantiHours = project.actual_hours_ivanti ?? 0
+                const trackerHours = project.actual_hours_timetracker ?? Math.max(0, (project.actual_hours ?? 0) - ivantiHours)
                 
                 return (
                   <Card key={project.asana_project_gid} className="hover:shadow-lg transition-shadow overflow-hidden">
                     {/* Project Header - Clickable */}
-                    <button
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
                       onClick={() => toggleProject(project.asana_project_gid)}
-                      className="w-full text-left"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          toggleProject(project.asana_project_gid)
+                        }
+                      }}
+                      className="w-full text-left cursor-pointer select-none outline-none focus-visible:ring-2 focus-visible:ring-[#f16a21]"
                     >
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
@@ -598,7 +989,14 @@ export default function OrganizationDashboard() {
                             </div>
                             <div className="text-center">
                               <p className="text-xs text-gray-500">Actual</p>
-                              <p className="text-xl font-bold text-emerald-600">{project.actual_hours.toFixed(1)}h</p>
+                              <p className="text-xl font-bold text-emerald-600">{(project.actual_hours ?? 0).toFixed(1)}h</p>
+                              {(trackerHours > 0 || ivantiHours > 0) && (
+                                <p className="text-[10px] text-gray-400 mt-0.5">
+                                  {trackerHours > 0 ? `Tracker ${trackerHours.toFixed(1)}h` : null}
+                                  {(trackerHours > 0 && ivantiHours > 0) ? " • " : null}
+                                  {ivantiHours > 0 ? `Ivanti ${ivantiHours.toFixed(1)}h` : null}
+                                </p>
+                              )}
                             </div>
                             <div className="text-center">
                               <p className="text-xs text-gray-500">Variance</p>
@@ -607,8 +1005,24 @@ export default function OrganizationDashboard() {
                               </p>
                             </div>
 
+                            {/* Analytics Button */}
+                            <Link
+                              href={`/dashboard/projects/${project.asana_project_gid}/analytics`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="ml-4"
+                            >
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-white hover:bg-orange-50 text-[#f16a21] border-[#f16a21] hover:border-orange-600"
+                              >
+                                <Target className="h-4 w-4 mr-2" />
+                                Analytics
+                              </Button>
+                            </Link>
+
                             {/* Expand Icon */}
-                            <div className="ml-4">
+                            <div className="ml-2">
                               {isExpanded ? (
                                 <ChevronUp className="h-6 w-6 text-gray-400" />
                               ) : (
@@ -636,23 +1050,40 @@ export default function OrganizationDashboard() {
                           </div>
                         )}
                       </CardContent>
-                    </button>
+                    </div>
 
-                    {/* Expanded Content - Asana Tasks + Support Tickets */}
+                    {/* Expanded Content - Asana Tasks + Ivanti Tickets */}
                     {isExpanded && (
                       <div className="border-t border-gray-200 bg-gray-50">
                         <div className="p-6 space-y-6">
                           {/* Asana Tasks Section */}
                           <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-[#f16a21]" />
-                              Asana Tasks
-                              {projectTasks.has(project.asana_project_gid) && (
-                                <span className="text-xs text-gray-500 font-normal">
-                                  ({projectTasks.get(project.asana_project_gid)?.total || 0} tasks)
-                                </span>
-                              )}
-                            </h5>
+                            <div className="flex items-center justify-between mb-3 gap-4">
+                              <h5 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4 text-[#f16a21]" />
+                                Asana Tasks
+                                {projectTasks.has(project.asana_project_gid) && (
+                                  <span className="text-xs text-gray-500 font-normal">
+                                    ({projectTasks.get(project.asana_project_gid)?.total || 0} tasks)
+                                  </span>
+                                )}
+                              </h5>
+                              <div className="relative w-full max-w-xs">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                <input
+                                  type="text"
+                                  placeholder="Search tasks, assignees..."
+                                  className="w-full pl-8 pr-2 py-1.5 rounded-md border border-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#f16a21]/70"
+                                  value={asanaSearchByProject[project.asana_project_gid] || ""}
+                                  onChange={(e) =>
+                                    setAsanaSearchByProject((prev) => ({
+                                      ...prev,
+                                      [project.asana_project_gid]: e.target.value,
+                                    }))
+                                  }
+                                />
+                              </div>
+                            </div>
                             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                               {loadingTasks.has(project.asana_project_gid) ? (
                                 <div className="divide-y divide-gray-200">
@@ -669,7 +1100,14 @@ export default function OrganizationDashboard() {
 
                                   if (sections.length === 0) {
                                     // Fallback: show tasks without sections (backward compatibility)
-                                    const allTasks = tasksData?.tasks || []
+                                    const allTasks = (tasksData?.tasks || []).filter((task: any) => {
+                                      const term = (asanaSearchByProject[project.asana_project_gid] || "").toLowerCase().trim()
+                                      if (!term) return true
+                                      return (
+                                        (task.name || "").toLowerCase().includes(term) ||
+                                        (task.assignee || "").toLowerCase().includes(term)
+                                      )
+                                    })
                                     if (allTasks.length === 0) {
                                       return (
                                         <div className="p-4 text-center">
@@ -677,41 +1115,67 @@ export default function OrganizationDashboard() {
                                         </div>
                                       )
                                     }
-                                    // Show flat list if no sections
-                                    return (
-                                      <div className="divide-y divide-gray-200">
-                                        {allTasks.map((task: any) => (
-                                          <div key={task.gid} className="p-3 hover:bg-gray-50 transition-colors">
-                                            <div className="flex items-start justify-between gap-3">
-                                              <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                  {task.completed ? (
-                                                    <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                                                  ) : (
-                                                    <div className="h-4 w-4 rounded-full border-2 border-gray-300 flex-shrink-0" />
-                                                  )}
-                                                  <p className={`text-sm ${task.completed ? 'text-gray-500 line-through' : 'text-gray-700'}`}>
-                                                    {task.name}
-                                                  </p>
-                                                </div>
-                                                <div className="flex items-center gap-3 mt-1 ml-6">
-                                                  <span className="text-xs text-gray-500 flex items-center gap-1">
-                                                    <Users className="h-3 w-3" />
-                                                    {task.assignee}
-                                                  </span>
-                                                  {task.due_on && (
-                                                    <>
-                                                      <span className="text-xs text-gray-400">•</span>
-                                                      <span className="text-xs text-gray-500">Due: {new Date(task.due_on).toLocaleDateString()}</span>
-                                                    </>
-                                                  )}
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )
+                                                    // Show flat list if no sections
+                                                    const projectName = project.project_name || project.asana_project_name || ''
+                                                    const parsed = parseProjectTitle(projectName)
+                                                    const customerName = parsed.client
+                                                    const productName = parsed.product
+                                                    const matchedCompany = getProjectCompany(projectName)
+                                                    
+                                                    return (
+                                                      <div className="divide-y divide-gray-200">
+                                                        {allTasks.map((task: any) => (
+                                                          <div key={task.gid} className="p-3 hover:bg-gray-50 transition-colors">
+                                                            <div className="flex items-start justify-between gap-3">
+                                                              <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2">
+                                                                  {task.completed ? (
+                                                                    <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                                                                  ) : (
+                                                                    <div className="h-4 w-4 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                                                                  )}
+                                                                  <p className={`text-sm ${task.completed ? 'text-gray-500 line-through' : 'text-gray-700'}`}>
+                                                                    {task.name}
+                                                                  </p>
+                                                                </div>
+                                                                <div className="flex items-center gap-3 mt-1 ml-6">
+                                                                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                                    <Users className="h-3 w-3" />
+                                                                    {task.assignee}
+                                                                  </span>
+                                                                  {task.due_on && (
+                                                                    <>
+                                                                      <span className="text-xs text-gray-400">•</span>
+                                                                      <span className="text-xs text-gray-500">Due: {new Date(task.due_on).toLocaleDateString()}</span>
+                                                                    </>
+                                                                  )}
+                                                                </div>
+                                                              </div>
+                                                              {/* Autofill Button */}
+                                                              <button
+                                                                onClick={(e) => {
+                                                                  e.stopPropagation()
+                                                                  void openTimeTrackerAutofill({
+                                                                    customer: matchedCompany?.name ?? customerName,
+                                                                    customer_id: matchedCompany?.id,
+                                                                    product: productName,
+                                                                    ref: project.asana_project_gid,
+                                                                    task: task.name,
+                                                                    category: 'Project',
+                                                                    source: 'asana'
+                                                                  })
+                                                                }}
+                                                                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#f16a21] hover:bg-orange-50 rounded transition-colors flex-shrink-0"
+                                                                title="Open Time Tracker with this task pre-filled"
+                                                              >
+                                                                <ExternalLink className="h-3 w-3" />
+                                                                Log Time
+                                                              </button>
+                                                            </div>
+                                                          </div>
+                                                        ))}
+                                                      </div>
+                                                    )
                                   }
 
                                   return (
@@ -761,7 +1225,25 @@ export default function OrganizationDashboard() {
                                                         </div>
                                                       </div>
                                                     ) : (
-                                                      visibleTasks.map((task: any) => (
+                                                      visibleTasks.map((task: any) => {
+                                                        const projectName = project.project_name || project.asana_project_name || ''
+                                                        const parsed = parseProjectTitle(projectName)
+                                                        const customerName = parsed.client
+                                                        const productName = parsed.product
+                                                        const matchedCompany = getProjectCompany(projectName)
+                                                        
+                                                        const term = (asanaSearchByProject[project.asana_project_gid] || "").toLowerCase().trim()
+                                                        if (
+                                                          term &&
+                                                          !(
+                                                            (task.name || "").toLowerCase().includes(term) ||
+                                                            (task.assignee || "").toLowerCase().includes(term)
+                                                          )
+                                                        ) {
+                                                          return null
+                                                        }
+
+                                                        return (
                                                       <div key={task.gid} className="p-3 pl-8 hover:bg-gray-100 transition-colors border-b border-gray-200 last:border-b-0">
                                                         <div className="flex items-start justify-between gap-3">
                                                           <div className="flex-1 min-w-0">
@@ -788,9 +1270,30 @@ export default function OrganizationDashboard() {
                                                               )}
                                                             </div>
                                                           </div>
+                                                          {/* Autofill Button */}
+                                                          <button
+                                                            onClick={(e) => {
+                                                              e.stopPropagation()
+                                                              void openTimeTrackerAutofill({
+                                                                customer: matchedCompany?.name ?? customerName,
+                                                                customer_id: matchedCompany?.id,
+                                                                product: productName,
+                                                                ref: project.asana_project_gid,
+                                                                task: task.name,
+                                                                category: 'Project',
+                                                                source: 'asana'
+                                                              })
+                                                            }}
+                                                            className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#f16a21] hover:bg-orange-50 rounded transition-colors flex-shrink-0"
+                                                            title="Open Time Tracker with this task pre-filled"
+                                                          >
+                                                            <ExternalLink className="h-3 w-3" />
+                                                            Log Time
+                                                          </button>
                                                         </div>
                                                       </div>
-                                                      ))
+                                                        )
+                                                      })
                                                     )}
                                                     
                                                     {remainingCount > 0 && (
@@ -843,110 +1346,193 @@ export default function OrganizationDashboard() {
                               <div className="w-full border-t border-gray-300"></div>
                             </div>
                             <div className="relative flex justify-center">
-                              <span className="bg-gray-50 px-3 text-sm text-gray-500 font-medium">Support Tickets</span>
+                              <span className="bg-gray-50 px-3 text-sm text-gray-500 font-medium">Ivanti Tickets</span>
                             </div>
                           </div>
 
-                          {/* Support/Ivanti Tickets Section */}
-                          <div>
-                            <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                              <Ticket className="h-4 w-4 text-blue-600" />
-                              Top 3 Support Tickets
-                              {(() => {
-                                const tickets = getProjectSupportTickets(project.project_name || project.asana_project_name || '')
-                                return tickets.length > 0 && (
-                                  <span className="text-xs text-gray-500 font-normal">
-                                    ({tickets.length} found)
-                                  </span>
-                                )
-                              })()}
-                            </h5>
-                            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                              {loadingSupportTickets ? (
-                                <div className="divide-y divide-gray-200">
-                                  {[1, 2, 3].map((i) => (
-                                    <div key={i} className="p-4">
-                                      <div className="flex items-start justify-between gap-3">
-                                        <div className="flex-1 min-w-0">
-                                          <div className="flex items-center gap-2 mb-2">
-                                            <div className="h-5 w-20 bg-gray-200 rounded animate-pulse"></div>
-                                            <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
-                                          </div>
-                                          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
-                                          <div className="flex items-center gap-3">
-                                            <div className="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
-                                            <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
-                                          </div>
-                                        </div>
-                                        <div className="text-right">
-                                          <div className="h-6 w-12 bg-gray-200 rounded animate-pulse mb-1"></div>
-                                          <div className="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (() => {
-                                const tickets = getProjectSupportTickets(project.project_name || project.asana_project_name || '')
-                                
-                                if (tickets.length === 0) {
+                          {/* Ivanti Tickets Section */}
+                          <div className="space-y-6">
+                            {(() => {
+                              const projectName = project.project_name || project.asana_project_name || ''
+                              const result = getProjectIvantiTickets(projectName)
+                              const incidents = result?.incidents || []
+                              const servicereqs = result?.servicereqs || []
+                              const parsed = parseProjectTitle(projectName)
+                              const projectCompany = parsed.client || null
+                              const ivantiSearchTerm = (ivantiSearchByProject[project.asana_project_gid] || "").toLowerCase().trim()
+                              
+                              const renderTicketList = (tickets: any[], category: string, color: string) => {
+                                const filtered = ivantiSearchTerm
+                                  ? tickets.filter((t) => {
+                                      const ticketNum = (t.ticket_number || "").toLowerCase()
+                                      const company = (t.company || "").toLowerCase()
+                                      const status = (t.status || "").toLowerCase()
+                                      return (
+                                        ticketNum.includes(ivantiSearchTerm) ||
+                                        company.includes(ivantiSearchTerm) ||
+                                        status.includes(ivantiSearchTerm)
+                                      )
+                                    })
+                                  : tickets
+                                // Show loading only if tickets haven't been loaded yet
+                                if (loadingIvantiTickets && !ivantiTicketsLoaded) {
                                   return (
                                     <div className="p-4 text-center">
-                                      <p className="text-sm text-gray-500">No support tickets found for this project</p>
+                                      <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600"></div>
+                                      <p className="text-sm text-gray-500 mt-2">Loading {category.toLowerCase()} tickets...</p>
                                     </div>
                                   )
                                 }
-
-                                return (
-                                  <div className="divide-y divide-gray-200">
-                                    {tickets.map((ticket: any, idx: number) => (
-                                      <div key={ticket.ticket_number} className="p-4 hover:bg-gray-50 transition-colors">
-                                        <div className="flex items-start justify-between gap-3">
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
-                                                {ticket.ticket_number}
-                                              </span>
-                                              {ticket.status && (
-                                                <span className="text-xs text-gray-500">
-                                                  {ticket.status}
-                                                </span>
-                                              )}
-                                            </div>
-                                            <p className="text-sm text-gray-600 mb-2">
-                                              {ticket.company}
-                                            </p>
-                                            <div className="flex items-center gap-3 text-xs text-gray-500">
-                                              <span className="flex items-center gap-1">
-                                                <Clock className="h-3 w-3" />
-                                                {ticket.actual_effort.toFixed(1)}h total effort
-                                              </span>
-                                              <span>•</span>
-                                              <span>{ticket.task_count} {ticket.task_count === 1 ? 'task' : 'tasks'}</span>
-                                            </div>
-                                            {ticket.tasks && ticket.tasks.length > 0 && (
-                                              <div className="mt-2 ml-4 space-y-1">
-                                                {ticket.tasks.map((task: any, taskIdx: number) => (
-                                                  <div key={taskIdx} className="text-xs text-gray-500">
-                                                    • {task.description || 'No description'} ({task.actual_effort}h)
+                                
+                                if (filtered.length === 0) {
+                                  return (
+                                    <div className="p-4 text-center">
+                                      <p className="text-sm text-gray-500">No {category} tickets found</p>
+                                      {projectCompany && (
+                                        <p className="text-xs text-gray-400 mt-1">
+                                          Looking for company: <span className="font-medium">{projectCompany}</span>
+                                        </p>
+                                      )}
+                                    </div>
+                                  )
+                                }
+                                
+                                                return (
+                                                  <div className="divide-y divide-gray-200">
+                                                    {filtered.map((ticket: any) => (
+                                                      <div key={`${ticket.ticket_number}-${ticket.category || category}`} className="p-4 hover:bg-gray-50 transition-colors">
+                                                        <div className="flex items-start justify-between gap-3">
+                                                          <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                              <span className={`px-2 py-1 ${color} text-xs font-semibold rounded`}>
+                                                                {ticket.ticket_number}
+                                                              </span>
+                                                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                                                {category}
+                                                              </span>
+                                                              {ticket.status && (
+                                                                <span className="text-xs text-gray-500">{ticket.status}</span>
+                                                              )}
+                                                            </div>
+                                                            <p className="text-sm text-gray-600 mb-2">
+                                                              {ticket.company ?? '—'}
+                                                            </p>
+                                                            <div className="flex items-center gap-3 text-xs text-gray-500">
+                                                              <span className="flex items-center gap-1">
+                                                                <Clock className="h-3 w-3" />
+                                                                {ticket.actual_effort.toFixed(1)}h total effort
+                                                              </span>
+                                                              <span>•</span>
+                                                              <span>{ticket.task_count} {ticket.task_count === 1 ? 'task' : 'tasks'}</span>
+                                                            </div>
+                                                            {ticket.tasks && ticket.tasks.length > 0 && (
+                                                              <div className="mt-2 ml-4 space-y-1">
+                                                                {ticket.tasks.map((task: any, taskIdx: number) => (
+                                                                  <div key={taskIdx} className="text-xs text-gray-500">
+                                                                    • {task.description || 'No description'} ({task.actual_effort}h)
+                                                                  </div>
+                                                                ))}
+                                                              </div>
+                                                            )}
+                                                          </div>
+                                                          <div className="text-right flex flex-col items-end gap-2">
+                                                            <div>
+                                                              <p className="text-lg font-bold text-amber-600">{ticket.actual_effort.toFixed(1)}h</p>
+                                                              <p className="text-xs text-gray-500">Logged</p>
+                                                            </div>
+                                                            {/* Autofill Button for Ivanti */}
+                                                            <button
+                                                              onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                const ivantiCompany = ticket.company || projectCompany || ''
+                                                                const matched = ivantiCompany ? findMatchingCompany(ivantiCompany, companies) : null
+                                                                void openTimeTrackerAutofill({
+                                                                  customer: matched?.name ?? ivantiCompany,
+                                                                  customer_id: matched?.id,
+                                                                  ref: ticket.ticket_number,
+                                                                  task: `${category}: ${ticket.ticket_number}`,
+                                                                  category: 'Support',
+                                                                  source: 'ivanti'
+                                                                })
+                                                              }}
+                                                              className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                                                              title="Open Time Tracker with this ticket pre-filled"
+                                                            >
+                                                              <ExternalLink className="h-3 w-3" />
+                                                              Log Time
+                                                            </button>
+                                                          </div>
+                                                        </div>
+                                                      </div>
+                                                    ))}
                                                   </div>
-                                                ))}
-                                              </div>
-                                            )}
-                                          </div>
-                                          <div className="text-right">
-                                            <p className="text-lg font-bold text-blue-600">
-                                              {ticket.actual_effort.toFixed(1)}h
-                                            </p>
-                                            <p className="text-xs text-gray-500">Logged</p>
-                                          </div>
-                                        </div>
+                                                )
+                              }
+                              
+                              return (
+                                <>
+                                  {/* Incident Tickets */}
+                                  <div>
+                                    <div className="flex items-center justify-between mb-3 gap-4">
+                                      <h5 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                                        <AlertCircle className="h-4 w-4 text-red-500" />
+                                        Incident Tickets
+                                      {ivantiTicketsLoaded && incidents.length > 0 && (
+                                        <span className="text-xs text-gray-500 font-normal">
+                                          ({incidents.length} {incidents.length === 1 ? 'ticket' : 'tickets'})
+                                        </span>
+                                      )}
+                                      {projectCompany && (
+                                        <span className="text-xs text-gray-400 font-normal">
+                                          • Matching: {projectCompany}
+                                        </span>
+                                      )}
+                                      </h5>
+                                      <div className="relative w-full max-w-xs">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                        <input
+                                          type="text"
+                                          placeholder="Search tickets, company, status..."
+                                          className="w-full pl-8 pr-2 py-1.5 rounded-md border border-gray-200 text-xs focus:outline-none focus:ring-1 focus:ring-[#f16a21]/70"
+                                          value={ivantiSearchByProject[project.asana_project_gid] || ""}
+                                          onChange={(e) =>
+                                            setIvantiSearchByProject((prev) => ({
+                                              ...prev,
+                                              [project.asana_project_gid]: e.target.value,
+                                            }))
+                                          }
+                                        />
                                       </div>
-                                    ))}
+                                    </div>
+                                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden max-h-96 overflow-y-auto">
+                                      {renderTicketList(incidents, 'Incident', 'bg-red-100 text-red-800')}
+                                    </div>
                                   </div>
-                                )
-                              })()}
-                            </div>
+
+                                  {/* ServiceReq Tickets */}
+                                  <div>
+                                    <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                      <Target className="h-4 w-4 text-blue-500" />
+                                      ServiceReq Tickets
+                                      {ivantiTicketsLoaded && servicereqs.length > 0 && (
+                                        <span className="text-xs text-gray-500 font-normal">
+                                          ({servicereqs.length} {servicereqs.length === 1 ? 'ticket' : 'tickets'})
+                                        </span>
+                                      )}
+                                      {projectCompany && (
+                                        <span className="text-xs text-gray-400 font-normal">
+                                          • Matching: {projectCompany}
+                                        </span>
+                                      )}
+                                    </h5>
+                                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden max-h-96 overflow-y-auto">
+                                      {renderTicketList(servicereqs, 'ServiceReq', 'bg-blue-100 text-blue-800')}
+                                    </div>
+                                  </div>
+
+                                </>
+                              )
+                            })()}
                           </div>
                         </div>
                       </div>

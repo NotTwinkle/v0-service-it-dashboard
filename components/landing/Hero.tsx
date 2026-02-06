@@ -86,7 +86,7 @@ export const Hero = () => {
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5 }}
-                        className="order-2 lg:order-1"
+                        className="order-1 lg:order-1"
                     >
                         {/* Badge - Simple entrance, CSS pulse instead of Framer */}
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-xs sm:text-sm font-medium mb-4 sm:mb-6 border border-orange-100">
@@ -148,7 +148,7 @@ export const Hero = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.6, delay: 0.1 }}
-                        className="relative order-1 lg:order-2"
+                        className="relative order-2 lg:order-2"
                         onMouseMove={handleMouseMove}
                         onMouseEnter={() => setIsHoveringDashboard(true)}
                         onMouseLeave={handleMouseLeave}

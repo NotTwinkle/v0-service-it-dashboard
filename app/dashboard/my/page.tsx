@@ -93,14 +93,14 @@ function AsanaCard({ estimatedHours, loading, dateLabel }: { estimatedHours: num
             <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
               <span className="text-lg font-bold text-orange-600">A</span>
             </div>
-            <h3 className="text-lg font-bold text-[#404040]">Asana</h3>
+            <h3 className="text-lg font-bold text-[#404040]">Asana (your projects)</h3>
           </div>
-          <p className="text-sm text-gray-500">Estimated hours only • {dateLabel}</p>
+          <p className="text-sm text-gray-500">Estimated vs your actual • {dateLabel}</p>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-4 pb-6 border-b border-gray-200 mb-6">
         <div>
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Total estimated</p>
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Total estimated (selected)</p>
           {loading ? (
             <p className="text-2xl font-bold mt-1 text-gray-400">Loading...</p>
           ) : estimatedHours !== null ? (
@@ -116,7 +116,7 @@ function AsanaCard({ estimatedHours, loading, dateLabel }: { estimatedHours: num
           ManHours Estimate (direct) or Mandays Estimate × 8 (converted to hours)
         </p>
         <p className="text-xs text-gray-500 mt-2">
-          Calculated from all Asana projects with custom field estimates
+          Calculated per project from Asana task custom fields
         </p>
       </div>
     </div>
@@ -181,6 +181,10 @@ export default function UserDashboard() {
   const [dateRange, setDateRange] = useState(defaultDateRange)
   const [asanaEstimatedHours, setAsanaEstimatedHours] = useState<number | null>(null)
   const [asanaLoading, setAsanaLoading] = useState(false)
+  const [userVarianceLoading, setUserVarianceLoading] = useState(false)
+  const [userVarianceError, setUserVarianceError] = useState<string | null>(null)
+  const [userVarianceProjects, setUserVarianceProjects] = useState<any[]>([])
+  const [userVarianceSummary, setUserVarianceSummary] = useState<any>(null)
 
   useEffect(() => {
     const session = localStorage.getItem("userSession")
@@ -192,29 +196,38 @@ export default function UserDashboard() {
     setUserEmail(userData.email)
     setUserName(userData.name ?? userData.email?.split("@")[0] ?? null)
     fetchUserTimelogs(userData.email, dateRange.startDate, dateRange.endDate)
-    fetchAsanaEstimatedHours()
+    fetchUserVariance(userData.email, dateRange.startDate, dateRange.endDate)
   }, [router])
 
-  const fetchAsanaEstimatedHours = async () => {
+  const fetchUserVariance = async (email: string, startDate: string, endDate: string) => {
     try {
-      setAsanaLoading(true)
-      const response = await fetch('/api/asana/projects')
+      setUserVarianceLoading(true)
+      setUserVarianceError(null)
+      const response = await fetch(
+        `/api/projects/variance/user?email=${encodeURIComponent(email)}&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`
+      )
       const data = await response.json()
       
-      if (data.success && data.projects) {
-        // Sum all estimated hours from all projects
-        const totalEstimated = data.projects.reduce((sum: number, project: any) => {
-          return sum + (project.estimated_hours || 0)
-        }, 0)
-        setAsanaEstimatedHours(Math.round(totalEstimated * 100) / 100)
+      if (data.success) {
+        setUserVarianceProjects(data.projects || [])
+        setUserVarianceSummary(data.summary || null)
+        // Use variance API's estimated total (keeps this aligned with org dashboard logic)
+        const totalEstimated = (data.summary?.total_estimated_hours ?? 0) as number
+        setAsanaEstimatedHours(Math.round(Number(totalEstimated) * 100) / 100)
       } else {
+        setUserVarianceError(data.error || "Failed to load your project variance")
+        setUserVarianceProjects([])
+        setUserVarianceSummary(null)
         setAsanaEstimatedHours(null)
       }
     } catch (error) {
-      console.error('Error fetching Asana estimated hours:', error)
+      console.error("Error fetching user variance:", error)
+      setUserVarianceError("Failed to load your project variance")
+      setUserVarianceProjects([])
+      setUserVarianceSummary(null)
       setAsanaEstimatedHours(null)
     } finally {
-      setAsanaLoading(false)
+      setUserVarianceLoading(false)
     }
   }
 
@@ -223,6 +236,7 @@ export default function UserDashboard() {
     if (userEmail) {
       setLoading(true)
       fetchUserTimelogs(userEmail, start, end).finally(() => setLoading(false))
+      fetchUserVariance(userEmail, start, end)
     }
   }
 
@@ -501,7 +515,7 @@ export default function UserDashboard() {
             />
             <AsanaCard
               estimatedHours={asanaEstimatedHours}
-              loading={asanaLoading}
+              loading={userVarianceLoading}
               dateLabel={dateLabel}
             />
             <PlatformVariancePlaceholder
@@ -520,16 +534,115 @@ export default function UserDashboard() {
                 <span className="text-2xl font-bold text-[#404040]">{Number(yourTotalInRange).toFixed(1)}h</span>
               </div>
               <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">Asana estimated</span>
+                <span className="text-sm font-medium text-gray-700">Asana estimated (your projects)</span>
                 <span className="text-2xl font-bold text-orange-600">
                   {asanaEstimatedHours !== null ? `${asanaEstimatedHours.toFixed(1)}h` : '—'}
                 </span>
               </div>
               <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                <span className="text-sm font-medium text-gray-700">Your entries</span>
-                <span className="text-2xl font-bold text-blue-600">{timelogSummary?.total_entries ?? 0}</span>
+                <span className="text-sm font-medium text-gray-700">Asana actual (you)</span>
+                <span className="text-2xl font-bold text-blue-600">
+                  {userVarianceSummary ? `${Number(userVarianceSummary.total_actual_hours ?? 0).toFixed(1)}h` : '—'}
+                </span>
               </div>
             </div>
+            {userVarianceSummary && (
+              <div className="mt-4 flex flex-wrap gap-3 text-xs text-gray-600">
+                <span className="px-3 py-1 bg-white border border-gray-200 rounded-full">
+                  Projects: <span className="font-semibold">{userVarianceSummary.total_projects ?? 0}</span>
+                </span>
+                <span className="px-3 py-1 bg-white border border-gray-200 rounded-full">
+                  Projects with actual: <span className="font-semibold">{userVarianceSummary.projects_with_actual ?? 0}</span>
+                </span>
+                <span className="px-3 py-1 bg-white border border-gray-200 rounded-full">
+                  Variance:{" "}
+                  <span className={`font-semibold ${Number(userVarianceSummary.total_variance_hours ?? 0) >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+                    {Number(userVarianceSummary.total_variance_hours ?? 0) >= 0 ? "+" : ""}
+                    {Number(userVarianceSummary.total_variance_hours ?? 0).toFixed(1)}h
+                  </span>
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Your project variance (aligned with org dashboard) */}
+          <div className="premium-card p-6 mt-8">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h4 className="text-lg font-bold text-[#404040]">Your project variance (Asana)</h4>
+                <p className="text-sm text-gray-600 mt-1">
+                  Estimated vs your actual hours (matched by reference_number and/or company_id) • {dateLabel}
+                </p>
+              </div>
+            </div>
+
+            {userVarianceError && (
+              <div className="flex gap-3 p-4 bg-red-50 rounded-xl border border-red-200 mb-4">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-800 font-medium">{userVarianceError}</p>
+              </div>
+            )}
+
+            {userVarianceLoading ? (
+              <div className="py-10 text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-600 mx-auto mb-4"></div>
+                <p className="text-sm text-gray-600">Loading your project variance...</p>
+              </div>
+            ) : userVarianceProjects.length === 0 ? (
+              <div className="py-10 text-center">
+                <p className="text-sm text-gray-600">No project variance found for this range.</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Tip: ensure your timelogs have either reference_number (Asana project GID) or company_id.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {userVarianceProjects.slice(0, 15).map((p: any) => (
+                  <div key={p.asana_project_gid} className="border border-gray-200 rounded-xl bg-white hover:shadow-sm transition-shadow">
+                    <div className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[#404040] truncate">
+                          {p.asana_project_name}
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                          <span className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-full">
+                            {p.entry_count ?? 0} entries
+                          </span>
+                          {p.matched_by && (
+                            <span className="px-2 py-1 bg-gray-50 border border-gray-200 rounded-full">
+                              matched: {p.matched_by}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6 justify-between md:justify-end">
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 uppercase font-semibold">Estimated</p>
+                          <p className="text-lg font-bold text-orange-600">{Number(p.estimated_hours ?? 0).toFixed(1)}h</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 uppercase font-semibold">Actual (you)</p>
+                          <p className="text-lg font-bold text-emerald-600">{Number(p.actual_hours ?? 0).toFixed(1)}h</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 uppercase font-semibold">Variance</p>
+                          <p className={`text-lg font-bold ${Number(p.variance_hours ?? 0) >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                            {Number(p.variance_hours ?? 0) >= 0 ? "+" : ""}
+                            {Number(p.variance_hours ?? 0).toFixed(1)}h
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {userVarianceProjects.length > 15 && (
+                  <p className="text-xs text-gray-500 pt-2">
+                    Showing top 15 by absolute variance (of {userVarianceProjects.length}).
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

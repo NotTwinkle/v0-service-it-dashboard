@@ -24,82 +24,91 @@ export const HorizontalScrollSection = ({ children }: HorizontalScrollSectionPro
         const pinElement = pinRef.current;
         const horizontalElement = horizontalRef.current;
 
-        // Get the total width needed for horizontal scroll
-        const getScrollWidth = () => {
-            return horizontalElement.scrollWidth - window.innerWidth;
-        };
+        // Use gsap.matchMedia for responsive behavior
+        const mm = gsap.matchMedia();
 
-        // Set initial state
-        gsap.set(horizontalElement, { x: 0 });
+        // Desktop: Horizontal scroll animation
+        mm.add("(min-width: 1024px)", () => {
+            // Reset any transforms from mobile
+            gsap.set(horizontalElement, { x: 0, clearProps: "all" });
 
-        // Get scroll length function (matches working example pattern)
-        const getScrollLength = () => {
-            return Math.max(0, horizontalElement.scrollWidth - window.innerWidth);
-        };
+            // Get scroll length function
+            const getScrollLength = () => {
+                return Math.max(0, horizontalElement.scrollWidth - window.innerWidth);
+            };
 
-        // Create horizontal scrolling animation with pinning (matches working example)
-        const containerTween = gsap.to(horizontalElement, {
-            x: () => -getScrollLength(),
-            ease: "none",
-            scrollTrigger: {
-                trigger: pinElement,
-                start: "top top",
-                end: () => `+=${getScrollLength()}`,
-                scrub: 1,
-                pin: true,
-                anticipatePin: 1,
-                pinType: 'transform', // Critical: matches working example
-                invalidateOnRefresh: true,
-            },
-        });
-
-        // Panel fade in/out while scrolling horizontally.
-        // This uses ScrollTrigger's "containerAnimation" so triggers are based on horizontal movement.
-        const panels = gsap.utils.toArray<HTMLElement>(horizontalElement.children as any);
-        panels.forEach((panel, idx) => {
-            // Keep the first panel visible when we enter the horizontal section.
-            gsap.set(panel, { opacity: idx === 0 ? 1 : 0.15, willChange: "opacity" });
-
-            gsap.timeline({
+            // Create horizontal scrolling animation with pinning
+            const containerTween = gsap.to(horizontalElement, {
+                x: () => -getScrollLength(),
+                ease: "none",
                 scrollTrigger: {
-                    trigger: panel,
-                    containerAnimation: containerTween,
-                    start: "left 85%",
-                    end: "right 15%",
-                    scrub: true,
-                    markers: false, // Set to true for debugging
+                    trigger: pinElement,
+                    start: "top top",
+                    end: () => `+=${getScrollLength()}`,
+                    scrub: 1,
+                    pin: true,
+                    anticipatePin: 1,
+                    pinType: 'transform',
+                    invalidateOnRefresh: true,
                 },
-            })
-                // Fade in as panel approaches center
-                .to(panel, { opacity: 1, duration: 0.4, ease: "none" }, 0)
-                // Fade out as panel exits
-                .to(panel, { opacity: 0.15, duration: 0.4, ease: "none" }, 0.6);
+            });
+
+            // Panel fade in/out while scrolling horizontally
+            const panels = gsap.utils.toArray<HTMLElement>(horizontalElement.children as any);
+            panels.forEach((panel, idx) => {
+                gsap.set(panel, { opacity: idx === 0 ? 1 : 0.15, willChange: "opacity" });
+
+                gsap.timeline({
+                    scrollTrigger: {
+                        trigger: panel,
+                        containerAnimation: containerTween,
+                        start: "left 85%",
+                        end: "right 15%",
+                        scrub: true,
+                    },
+                })
+                    .to(panel, { opacity: 1, duration: 0.4, ease: "none" }, 0)
+                    .to(panel, { opacity: 0.15, duration: 0.4, ease: "none" }, 0.6);
+            });
+
+            // Cleanup function for desktop
+            return () => {
+                containerTween.kill();
+                ScrollTrigger.getAll().forEach(trigger => {
+                    if (trigger.trigger === pinElement || panels.includes(trigger.trigger as HTMLElement)) {
+                        trigger.kill();
+                    }
+                });
+            };
         });
 
-        // Refresh on resize
-        const handleResize = () => {
-            ScrollTrigger.refresh();
-        };
-        window.addEventListener("resize", handleResize);
-
-        // Cleanup function
-        return () => {
-            containerTween.kill();
-            window.removeEventListener("resize", handleResize);
+        // Mobile: No horizontal scroll, just normal vertical flow
+        mm.add("(max-width: 1023px)", () => {
+            // Reset any transforms and ensure normal flow
+            gsap.set(horizontalElement, { x: 0, clearProps: "all" });
+            
+            // Kill any existing ScrollTriggers on mobile
             ScrollTrigger.getAll().forEach(trigger => {
-                if (trigger.trigger === pinElement || panels.includes(trigger.trigger as HTMLElement)) {
+                if (trigger.trigger === pinElement) {
                     trigger.kill();
                 }
             });
+        });
+
+        // Cleanup matchMedia on unmount
+        return () => {
+            mm.revert();
         };
-    }, { scope: pinRef, dependencies: [] });
+    }, { scope: pinRef });
 
     return (
-        <div ref={pinRef} className="relative w-screen overflow-hidden">
+        <div 
+            ref={pinRef} 
+            className="relative w-full lg:w-screen lg:overflow-hidden"
+        >
             <div 
                 ref={horizontalRef}
-                className="flex w-max"
-                style={{ willChange: "transform" }}
+                className="flex flex-col lg:flex-row lg:w-max w-full"
             >
                 {children}
             </div>

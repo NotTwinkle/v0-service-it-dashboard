@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useSpring } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { useRef, ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -24,6 +24,8 @@ interface MagneticButtonProps {
     scaleOnHover?: number; // default 1.02
     as?: "button" | "a";
     href?: string;
+    target?: string;
+    rel?: string;
     disabled?: boolean;
 }
 
@@ -35,6 +37,8 @@ export function MagneticButton({
     scaleOnHover = 1.02,
     as = "button",
     href,
+    target,
+    rel,
     disabled = false,
 }: MagneticButtonProps) {
     const prefersReducedMotion = useReducedMotion();
@@ -79,28 +83,44 @@ export function MagneticButton({
         tap: prefersReducedMotion ? {} : { scale: 0.98 },
     };
 
-    const Component = motion[as] as typeof motion.button;
+    const baseProps = {
+        ref: ref as React.Ref<HTMLButtonElement & HTMLAnchorElement>,
+        onClick,
+        className: cn("relative overflow-hidden", className),
+        style: {
+            x: prefersReducedMotion ? 0 : springX,
+            y: prefersReducedMotion ? 0 : springY,
+        } as React.CSSProperties,
+        onMouseMove: handleMouseMove,
+        onMouseLeave: handleMouseLeave,
+        variants,
+        initial: "initial" as const,
+        whileHover: "hover" as const,
+        whileTap: "tap" as const,
+        transition: { type: "spring" as const, stiffness: 400, damping: 25 },
+    };
+
+    if (as === "a" && href) {
+        return (
+            <motion.a
+                {...baseProps}
+                href={href}
+                target={target}
+                rel={rel}
+            >
+                <motion.span
+                    className="absolute inset-0 bg-white/10 rounded-full pointer-events-none"
+                    initial={{ scale: 0, opacity: 0 }}
+                    whileHover={prefersReducedMotion ? {} : { scale: 2, opacity: 0.15 }}
+                    transition={{ duration: 0.4 }}
+                />
+                {children}
+            </motion.a>
+        );
+    }
 
     return (
-        <Component
-            ref={ref as any}
-            href={as === "a" ? href : undefined}
-            onClick={onClick}
-            disabled={disabled}
-            className={cn("relative overflow-hidden", className)}
-            style={{
-                x: prefersReducedMotion ? 0 : springX,
-                y: prefersReducedMotion ? 0 : springY,
-            }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            variants={variants}
-            initial="initial"
-            whileHover="hover"
-            whileTap="tap"
-            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        >
-            {/* Ripple/glow effect on hover */}
+        <motion.button {...baseProps} disabled={disabled}>
             <motion.span
                 className="absolute inset-0 bg-white/10 rounded-full pointer-events-none"
                 initial={{ scale: 0, opacity: 0 }}
@@ -108,6 +128,6 @@ export function MagneticButton({
                 transition={{ duration: 0.4 }}
             />
             {children}
-        </Component>
+        </motion.button>
     );
 }

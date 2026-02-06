@@ -24,8 +24,7 @@ export const CTA = () => {
 
     return (
         <section
-            className="py-12 sm:py-16 md:py-24 relative overflow-hidden bg-astronaut flex-shrink-0"
-            style={{ width: "100vw" }}
+            className="py-12 sm:py-16 md:py-24 relative overflow-hidden bg-astronaut flex-shrink-0 w-full lg:w-screen"
         >
             {/* Static Mesh Gradient Background - CSS animation for subtle movement */}
             <div className="absolute inset-0 overflow-hidden">
@@ -70,7 +69,7 @@ export const CTA = () => {
                         Ready to Unify Your IT Workflow?
                     </h2>
 
-                    <p className="text-blue-100 text-base sm:text-lg md:text-xl mb-8 sm:mb-10 leading-relaxed">
+                    <p className="text-white/90 text-base sm:text-lg md:text-xl mb-8 sm:mb-10 leading-relaxed">
                         Join enterprise teams who have regained control over their project timelines and data accuracy with Service IT+.
                     </p>
 
@@ -87,7 +86,7 @@ export const CTA = () => {
                             <ArrowRight className="size-4 sm:size-5" />
                         </MagneticButton>
                         <MagneticButton
-                            className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg rounded-full border-2 border-blue-400/30 text-white hover:bg-white/10 bg-transparent font-medium flex items-center justify-center transition-colors"
+                            className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg rounded-full border-2 border-white/40 text-white hover:bg-white/20 hover:border-white/60 bg-transparent font-medium flex items-center justify-center transition-colors"
                             magneticStrength={0.2}
                             scaleOnHover={1.02}
                             as="a"
